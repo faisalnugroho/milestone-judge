@@ -125,11 +125,11 @@ export default function MilestoneDetailPage() {
   }
 
   const inputCls =
-    "w-full rounded border border-ink-600 bg-ink-950 px-3 py-2 text-sm text-ink-100 placeholder:text-ink-400 focus:border-verdict-500/60 focus:outline-none";
+    "w-full rounded-[12px] border border-black/10 bg-white px-3.5 py-2.5 text-[15px] text-ink-50 placeholder:text-ink-400 transition-shadow focus:border-verdict-400";
   const btnCls =
-    "rounded border border-verdict-500/70 bg-verdict-500/15 px-4 py-2 text-sm font-medium text-verdict-400 transition-colors hover:bg-verdict-500/25 disabled:cursor-not-allowed disabled:opacity-40";
+    "btn-pill bg-verdict-400 px-5 py-2.5 text-sm font-medium text-white hover:bg-verdict-600 disabled:cursor-not-allowed disabled:opacity-30";
   const ghostBtn =
-    "rounded border border-ink-600 px-4 py-2 text-sm text-ink-200 transition-colors hover:border-ink-500 hover:text-ink-100 disabled:cursor-not-allowed disabled:opacity-40";
+    "rounded-full border border-black/10 bg-white px-5 py-2.5 text-sm font-medium text-ink-50 shadow-card transition-colors hover:bg-black/[0.03] disabled:cursor-not-allowed disabled:opacity-40";
 
   if (error && !m) {
     return (
@@ -147,23 +147,23 @@ export default function MilestoneDetailPage() {
   if (!m) return <p className="text-sm text-ink-400">Loading…</p>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* ---------------- header ---------------- */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <span className="font-mono text-xs text-ink-400">#{m.id}</span>
             <StatusBadge status={m.status} />
           </div>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink-50">
+          <h1 className="mt-2.5 text-3xl font-semibold tracking-tight text-ink-50">
             {m.title}
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink-400">{m.description}</p>
+          <p className="mt-1.5 max-w-2xl text-[15px] text-ink-400">{m.description}</p>
         </div>
-        <Card className="px-4 py-3 text-right">
+        <Card className="px-6 py-4 text-right">
           <SectionLabel>Escrow</SectionLabel>
           <GenAmount wei={m.amount_wei} size="lg" />
-          <p className="mt-1 font-mono text-[11px] text-ink-400">
+          <p className="mt-1 text-xs text-ink-400">
             {m.balance_wei === m.amount_wei
               ? "held by contract"
               : m.balance_wei === "0"
@@ -175,49 +175,49 @@ export default function MilestoneDetailPage() {
 
       {role && (
         <p className="text-xs text-ink-400">
-          You are the <span className="text-verdict-400">{role}</span> of this
+          You are the <span className="font-medium text-verdict-600">{role}</span> of this
           milestone.
         </p>
       )}
 
       {/* ---------------- parties + timing ---------------- */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Card className="p-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="p-5">
           <SectionLabel>Client</SectionLabel>
           <a
             href={explorerAddress(m.client)}
             target="_blank"
             rel="noreferrer"
-            className="font-mono text-xs text-ink-200 hover:text-verdict-400"
+            className="font-mono text-xs text-ink-200 transition-colors hover:text-verdict-600"
           >
             {shortAddress(m.client, 6)}
           </a>
         </Card>
-        <Card className="p-4">
+        <Card className="p-5">
           <SectionLabel>Worker</SectionLabel>
           <a
             href={explorerAddress(m.worker)}
             target="_blank"
             rel="noreferrer"
-            className="font-mono text-xs text-ink-200 hover:text-verdict-400"
+            className="font-mono text-xs text-ink-200 transition-colors hover:text-verdict-600"
           >
             {shortAddress(m.worker, 6)}
           </a>
         </Card>
-        <Card className="p-4">
+        <Card className="p-5">
           <SectionLabel>Deadline</SectionLabel>
           <p className="text-xs text-ink-200">{formatEpoch(m.deadline_epoch)}</p>
           <p className="mt-0.5 text-[11px] text-ink-400">
             {timeLeft(m.deadline_epoch)}
           </p>
         </Card>
-        <Card className="p-4">
+        <Card className="p-5">
           <SectionLabel>Dispute window</SectionLabel>
           <p className="text-xs text-ink-200">
             {m.dispute_deadline ? formatEpoch(m.dispute_deadline) : "—"}
           </p>
           {disputeWindowOpen && (
-            <p className="mt-0.5 text-[11px] text-verdict-400">
+            <p className="mt-0.5 text-[11px] text-verdict-600">
               {timeLeft(m.dispute_deadline)}
             </p>
           )}
@@ -225,27 +225,27 @@ export default function MilestoneDetailPage() {
       </div>
 
       {/* ---------------- criteria ---------------- */}
-      <Card className="p-5">
+      <Card className="p-6">
         <SectionLabel>Acceptance criteria</SectionLabel>
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {criteria.map((c) => {
             const verdictStatus = (m.verdict as { statuses?: { id: string; status: string }[] })
               .statuses?.find((s) => s.id === c.id);
             return (
               <li
                 key={c.id}
-                className="flex items-start justify-between gap-3 rounded border border-ink-700 bg-ink-950 px-3 py-2"
+                className="flex items-start justify-between gap-3 rounded-[12px] bg-black/[0.03] px-4 py-3"
               >
                 <div>
                   <span className="font-mono text-[11px] text-ink-400">
                     [{c.id}]
                   </span>{" "}
-                  <span className="text-sm text-ink-100">{c.text}</span>
+                  <span className="text-sm text-ink-50">{c.text}</span>
                   <span
-                    className={`ml-2 rounded px-1 py-0.5 font-mono text-[10px] uppercase ${
+                    className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                       c.mandatory
-                        ? "bg-verdict-500/15 text-verdict-400"
-                        : "bg-ink-800 text-ink-400"
+                        ? "bg-verdict-400/10 text-verdict-600"
+                        : "bg-black/[0.05] text-ink-400"
                     }`}
                   >
                     {c.mandatory ? "mandatory" : "advisory"}
@@ -266,7 +266,7 @@ export default function MilestoneDetailPage() {
       </Card>
 
       {/* ---------------- evidence ---------------- */}
-      <Card className="p-5">
+      <Card className="p-6">
         <SectionLabel>Submitted evidence</SectionLabel>
         {m.evidence.length === 0 ? (
           <p className="text-sm text-ink-400">
@@ -280,17 +280,17 @@ export default function MilestoneDetailPage() {
                 href={e.url}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded border border-ink-700 bg-ink-950 p-3 transition-colors hover:border-ink-600"
+                className="rounded-[12px] bg-black/[0.03] p-4 transition-colors hover:bg-black/[0.06]"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-ink-300">
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-500 shadow-card">
                     {e.kind}
                   </span>
-                  <span className="font-mono text-[10px] text-ink-500">
+                  <span className="text-[10px] text-ink-400">
                     {formatEpoch(e.at)}
                   </span>
                 </div>
-                <p className="mt-2 truncate font-mono text-xs text-ink-200">
+                <p className="mt-2 truncate font-mono text-xs text-verdict-600">
                   {e.url}
                 </p>
                 {e.note && (
@@ -303,7 +303,7 @@ export default function MilestoneDetailPage() {
           </div>
         )}
         {m.worker_statement && (
-          <div className="mt-4 rounded border border-ink-700 bg-ink-950 p-3">
+          <div className="mt-4 rounded-[12px] bg-black/[0.03] p-4">
             <SectionLabel>Worker statement</SectionLabel>
             <p className="text-sm leading-relaxed text-ink-300">
               {m.worker_statement}
@@ -319,34 +319,34 @@ export default function MilestoneDetailPage() {
 
       {/* ---------------- adjudication result ---------------- */}
       {history.length > 0 && (
-        <Card className="p-5">
+        <Card className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SectionLabel>Adjudication</SectionLabel>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               <DecisionBadge decision={history[history.length - 1].decision} />
-              <span className="font-mono text-[11px] text-ink-400">
+              <span className="text-xs text-ink-400">
                 round {history[history.length - 1].round} ·{" "}
                 {history[history.length - 1].trigger} · quality{" "}
                 {history[history.length - 1].evidence_quality}
               </span>
             </div>
           </div>
-          <p className="mt-3 text-sm leading-relaxed text-ink-300">
+          <p className="mt-3 text-[15px] leading-relaxed text-ink-300">
             {history[history.length - 1].summary}
           </p>
-          <p className="mt-2 font-mono text-[11px] text-ink-500">
+          <p className="mt-2 font-mono text-[11px] text-ink-400">
             rule: {history[history.length - 1].rule}
           </p>
-          <div className="mt-4 space-y-2">
+          <div className="mt-5 space-y-2.5">
             {history[history.length - 1].statuses.map((s) => {
               const c = criteria.find((x) => x.id === s.id);
               return (
                 <div
                   key={s.id}
-                  className="rounded border border-ink-700 bg-ink-950 px-3 py-2"
+                  className="rounded-[12px] bg-black/[0.03] px-4 py-3"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-ink-100">
+                    <span className="text-sm text-ink-50">
                       <span className="font-mono text-[11px] text-ink-400">
                         [{s.id}]
                       </span>{" "}
@@ -355,12 +355,12 @@ export default function MilestoneDetailPage() {
                     <CriterionStatusPill status={s.status} />
                   </div>
                   {s.evidence && (
-                    <p className="mt-1 text-xs text-ink-400">
+                    <p className="mt-1.5 text-xs text-ink-400">
                       evidence: {s.evidence}
                     </p>
                   )}
                   {s.reason && (
-                    <p className="mt-0.5 text-xs text-ink-500">
+                    <p className="mt-1 text-xs text-ink-400/80">
                       reason: {s.reason}
                     </p>
                   )}
@@ -369,17 +369,17 @@ export default function MilestoneDetailPage() {
             })}
           </div>
           {history.length > 1 && (
-            <details className="mt-4">
-              <summary className="cursor-pointer text-xs text-ink-300">
+            <details className="mt-5">
+              <summary className="cursor-pointer text-xs font-medium text-verdict-600">
                 Earlier rounds ({history.length - 1})
               </summary>
-              <div className="mt-2 space-y-3">
+              <div className="mt-3 space-y-3">
                 {history.slice(0, -1).map((h) => (
                   <div
                     key={h.round}
-                    className="rounded border border-ink-800 bg-ink-950 px-3 py-2"
+                    className="rounded-[12px] bg-black/[0.02] px-4 py-3"
                   >
-                    <p className="font-mono text-[11px] text-ink-400">
+                    <p className="text-[11px] text-ink-400">
                       round {h.round} ({h.trigger}) → {h.decision}
                     </p>
                     <p className="mt-1 text-xs text-ink-400">{h.summary}</p>
@@ -388,7 +388,7 @@ export default function MilestoneDetailPage() {
               </div>
             </details>
           )}
-          <p className="mt-4 font-mono text-[10px] text-ink-500">
+          <p className="mt-5 text-[10px] text-ink-400/80">
             decided by GenLayer validator consensus —{" "}
             {["APPROVED", "REJECTED", "INSUFFICIENT_EVIDENCE"].includes(
               m.status
@@ -401,11 +401,11 @@ export default function MilestoneDetailPage() {
 
       {/* ---------------- dispute ---------------- */}
       {dispute && (
-        <Card className="p-5">
+        <Card className="p-6">
           <SectionLabel>Dispute</SectionLabel>
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={`DISPUTE_${dispute.status}`} />
-            <span className="font-mono text-[11px] text-ink-400">
+            <span className="text-xs text-ink-400">
               opened {formatEpoch(dispute.opened_at)} by{" "}
               {shortAddress(dispute.opened_by, 4)} · original decision{" "}
               {dispute.original_decision}
@@ -422,7 +422,7 @@ export default function MilestoneDetailPage() {
                   href={e.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded border border-ink-700 bg-ink-950 px-2 py-1 font-mono text-[11px] text-ink-300 hover:border-ink-600"
+                  className="rounded-full bg-black/[0.04] px-3 py-1.5 font-mono text-[11px] text-ink-300 transition-colors hover:bg-black/[0.08]"
                 >
                   [{e.kind}] {e.url.slice(0, 48)}…
                 </a>
@@ -430,10 +430,10 @@ export default function MilestoneDetailPage() {
             </div>
           )}
           {dispute.status === "RESOLVED" && dispute.resolution.decision && (
-            <div className="mt-4 rounded border border-ink-700 bg-ink-950 px-3 py-2">
-              <div className="flex items-center gap-2">
+            <div className="mt-4 rounded-[12px] bg-black/[0.03] px-4 py-3">
+              <div className="flex items-center gap-2.5">
                 <DecisionBadge decision={dispute.resolution.decision} />
-                <span className="font-mono text-[11px] text-ink-400">
+                <span className="text-xs text-ink-400">
                   resolved {formatEpoch(dispute.resolution.at ?? "0")}
                 </span>
               </div>
@@ -443,18 +443,18 @@ export default function MilestoneDetailPage() {
       )}
 
       {/* ---------------- timeline ---------------- */}
-      <Card className="p-5">
+      <Card className="p-6">
         <SectionLabel>Timeline</SectionLabel>
-        <ol className="space-y-2">
+        <ol className="space-y-2.5">
           {m.timeline.map((ev, i) => (
             <li key={i} className="flex items-baseline gap-3">
-              <span className="w-36 shrink-0 font-mono text-[11px] text-ink-500 tabular-nums">
+              <span className="w-36 shrink-0 text-[11px] tabular-nums text-ink-400">
                 {formatEpoch(ev.t)}
               </span>
-              <span className="font-mono text-[11px] text-verdict-400/80">
+              <span className="font-mono text-[11px] text-verdict-600">
                 {ev.event}
               </span>
-              <span className="font-mono text-[10px] text-ink-500">
+              <span className="font-mono text-[10px] text-ink-400">
                 by {shortAddress(ev.actor, 4)}
               </span>
             </li>
@@ -463,11 +463,11 @@ export default function MilestoneDetailPage() {
       </Card>
 
       {/* ---------------- actions ---------------- */}
-      <Card className="space-y-5 p-5">
+      <Card className="space-y-5 p-6">
         <SectionLabel>Actions</SectionLabel>
         <TxTracker tx={tx} />
         {actionError && (
-          <p className="rounded border border-fail/40 bg-[#2a1214] px-3 py-2 text-xs text-[#f08a8d]">
+          <p className="rounded-[12px] bg-fail/[0.07] px-4 py-3 text-xs text-fail">
             {actionError}
           </p>
         )}
@@ -507,7 +507,7 @@ export default function MilestoneDetailPage() {
             </SectionLabel>
             <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
               <input
-                className={`${inputCls} font-mono`}
+                className={`${inputCls} font-mono text-sm`}
                 placeholder="https://your-deployment.example.com"
                 value={evidenceUrl}
                 onChange={(e) => setEvidenceUrl(e.target.value)}
@@ -588,7 +588,7 @@ export default function MilestoneDetailPage() {
         )}
 
         {disputeWindowOpen && role && (
-          <div className="space-y-3 border-t border-ink-700 pt-4">
+          <div className="space-y-3 border-t border-black/[0.08] pt-5">
             <SectionLabel>Dispute this decision</SectionLabel>
             <textarea
               className={`${inputCls} min-h-[60px]`}
@@ -597,7 +597,7 @@ export default function MilestoneDetailPage() {
               onChange={(e) => setDisputeReason(e.target.value)}
             />
             <input
-              className={`${inputCls} font-mono`}
+              className={`${inputCls} font-mono text-sm`}
               placeholder="Optional evidence URL to support the dispute"
               value={disputeUrl}
               onChange={(e) => setDisputeUrl(e.target.value)}
@@ -629,7 +629,7 @@ export default function MilestoneDetailPage() {
         )}
 
         {dispute && dispute.status === "OPEN" && role && (
-          <div className="space-y-3 border-t border-ink-700 pt-4">
+          <div className="space-y-3 border-t border-black/[0.08] pt-5">
             <SectionLabel>Resolve dispute</SectionLabel>
             <p className="text-sm text-ink-300">
               Re-adjudicates ALL evidence (original + dispute) under a fresh
@@ -646,7 +646,7 @@ export default function MilestoneDetailPage() {
         )}
 
         {canFinalize && (
-          <div className="space-y-3 border-t border-ink-700 pt-4">
+          <div className="space-y-3 border-t border-black/[0.08] pt-5">
             <SectionLabel>Finalize</SectionLabel>
             <p className="text-sm text-ink-300">
               The dispute window has closed.{" "}
@@ -666,7 +666,7 @@ export default function MilestoneDetailPage() {
 
         {["CREATED", "FUNDED"].includes(m.status) &&
           Number(m.deadline_epoch) <= nowSec && (
-          <div className="space-y-3 border-t border-ink-700 pt-4">
+          <div className="space-y-3 border-t border-black/[0.08] pt-5">
             <SectionLabel>Expired</SectionLabel>
             <p className="text-sm text-ink-300">
               The deadline passed without a worker submission. Anyone can
@@ -684,12 +684,12 @@ export default function MilestoneDetailPage() {
       </Card>
 
       {tx.hash && (
-        <p className="text-center font-mono text-[11px] text-ink-500">
+        <p className="text-center font-mono text-[11px] text-ink-400">
           <a
             href={explorerTx(tx.hash)}
             target="_blank"
             rel="noreferrer"
-            className="hover:text-verdict-400"
+            className="transition-colors hover:text-verdict-600"
           >
             view transaction on explorer ↗
           </a>

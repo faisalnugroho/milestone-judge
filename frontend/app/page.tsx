@@ -57,38 +57,41 @@ const TRUST_PROBLEMS = [
 
 export default function LandingPage() {
   return (
-    <div className="space-y-20 pb-10">
-      {/* ---------------- Hero ---------------- */}
-      <section className="pt-10 sm:pt-16">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-verdict-400">
+    <div className="pb-16">
+      {/* ---------------- Hero — Apple-style centered ---------------- */}
+      <section className="mx-auto max-w-3xl pt-16 text-center sm:pt-24">
+        <p className="text-[17px] font-semibold text-verdict-600">
           GenLayer Intelligent Contract
         </p>
-        <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight tracking-tight text-ink-50 sm:text-5xl">
-          Trustless milestone escrow with AI-powered on-chain adjudication.
+        <h1 className="mt-3 text-4xl font-semibold leading-[1.07] tracking-tight text-ink-50 sm:text-[56px]">
+          Trustless milestone
+          <br />
+          escrow.
         </h1>
-        <p className="mt-5 max-w-2xl text-base leading-relaxed text-ink-300">
-          A client funds a milestone and writes acceptance criteria in plain
-          language. The worker submits public evidence. A GenLayer Intelligent
-          Contract fetches that evidence, has an LLM evaluate every criterion,
-          and reaches validator consensus on the verdict — then moves the
-          escrow exactly as the rules require. No platform in the middle. No
-          trusting a single AI answer.
+        <p className="mx-auto mt-5 max-w-xl text-[19px] leading-relaxed text-ink-400">
+          AI-powered on-chain adjudication. A client funds a milestone and
+          writes acceptance criteria in plain language — the network decides
+          when the work is done.
         </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link
             href="/create"
-            className="rounded border border-verdict-500/70 bg-verdict-500/15 px-5 py-2.5 text-sm font-medium text-verdict-400 transition-colors hover:bg-verdict-500/25"
+            className="btn-pill bg-verdict-400 px-6 py-3 text-[15px] font-medium text-white hover:bg-verdict-600"
           >
             Create a milestone
           </Link>
           <Link
             href="/dashboard"
-            className="rounded border border-ink-600 px-5 py-2.5 text-sm text-ink-200 transition-colors hover:border-ink-500 hover:text-ink-100"
+            className="text-[15px] text-verdict-600 transition-colors hover:text-verdict-500 hover:underline"
           >
-            Open dashboard
+            Open dashboard ›
           </Link>
         </div>
-        <dl className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      </section>
+
+      {/* ---------------- Feature trio ---------------- */}
+      <section className="mx-auto mt-16 max-w-5xl">
+        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             ["Escrow", "Real GEN held by the contract until a consensus verdict settles it."],
             ["Judgment", "LLM evaluation of natural-language acceptance criteria, criterion by criterion."],
@@ -96,12 +99,12 @@ export default function LandingPage() {
           ].map(([term, def]) => (
             <div
               key={term}
-              className="rounded-lg border border-ink-700 bg-ink-900 px-4 py-4"
+              className="rounded-apple bg-white px-6 py-6 shadow-card"
             >
-              <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-400">
+              <dt className="text-[15px] font-semibold text-ink-50">
                 {term}
               </dt>
-              <dd className="mt-1.5 text-sm leading-relaxed text-ink-300">
+              <dd className="mt-1.5 text-sm leading-relaxed text-ink-400">
                 {def}
               </dd>
             </div>
@@ -110,21 +113,21 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------- Trust problem ---------------- */}
-      <section>
-        <h2 className="text-2xl font-semibold tracking-tight text-ink-50">
-          The trust problem
+      <section className="mx-auto mt-20 max-w-5xl">
+        <h2 className="text-3xl font-semibold tracking-tight text-ink-50 sm:text-4xl">
+          The trust problem.
         </h2>
-        <p className="mt-2 max-w-2xl text-sm text-ink-400">
+        <p className="mt-3 max-w-2xl text-[17px] text-ink-400">
           Paying for digital work before you can verify it — and adjudicating
           it after — is a human problem every platform re-solves with humans.
         </p>
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="mt-8 grid gap-4 lg:grid-cols-3">
           {TRUST_PROBLEMS.map(({ q, a }) => (
             <div
               key={q}
-              className="rounded-lg border border-ink-700 bg-ink-900 p-5"
+              className="rounded-apple bg-white p-6 shadow-card"
             >
-              <p className="text-sm font-medium leading-snug text-ink-100">
+              <p className="text-[15px] font-semibold leading-snug text-ink-50">
                 {q}
               </p>
               <p className="mt-3 text-sm leading-relaxed text-ink-400">{a}</p>
@@ -133,46 +136,48 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---------------- Adjudication pipeline (signature) ---------------- */}
-      <section>
-        <h2 className="text-2xl font-semibold tracking-tight text-ink-50">
-          How adjudication works
+      {/* ---------------- Adjudication pipeline ---------------- */}
+      <section className="mx-auto mt-20 max-w-5xl">
+        <h2 className="text-3xl font-semibold tracking-tight text-ink-50 sm:text-4xl">
+          How adjudication works.
         </h2>
-        <p className="mt-2 max-w-2xl text-sm text-ink-400">
+        <p className="mt-3 max-w-2xl text-[17px] text-ink-400">
           The important part is not “AI decides.” It is that the AI evaluation
           happens inside an Intelligent Contract, and GenLayer validators must
           reach consensus on the result before any money can move.
         </p>
-        <ol className="mt-8 space-y-0">
-          {PIPELINE.map((step) => (
-            <li key={step.n} className="relative flex gap-4 pb-6 last:pb-0">
-              <div className="flex flex-col items-center">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-verdict-500/50 bg-ink-900 font-mono text-xs font-semibold text-verdict-400">
-                  {step.n}
-                </span>
-                {step.n < PIPELINE.length && (
-                  <span
-                    aria-hidden
-                    className="mt-1 w-px flex-1 bg-gradient-to-b from-verdict-500/40 to-ink-700"
-                  />
-                )}
-              </div>
-              <div className="pt-1">
-                <p className="text-sm font-medium text-ink-100">
-                  {step.title}
-                </p>
-                <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-ink-400">
-                  {step.body}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-8 rounded-lg border border-ink-700 bg-ink-900 p-5">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-400">
+        <div className="mt-10 rounded-apple bg-white p-8 shadow-card sm:p-10">
+          <ol className="mx-auto max-w-2xl space-y-0">
+            {PIPELINE.map((step) => (
+              <li key={step.n} className="relative flex gap-5 pb-8 last:pb-0">
+                <div className="flex flex-col items-center">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-verdict-400/10 text-xs font-semibold text-verdict-600">
+                    {step.n}
+                  </span>
+                  {step.n < PIPELINE.length && (
+                    <span
+                      aria-hidden
+                      className="mt-1.5 w-px flex-1 bg-black/[0.09]"
+                    />
+                  )}
+                </div>
+                <div className="pt-1">
+                  <p className="text-[15px] font-semibold text-ink-50">
+                    {step.title}
+                  </p>
+                  <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-ink-400">
+                    {step.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="mt-4 rounded-apple bg-white p-6 shadow-card">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400">
             Why the split matters
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-ink-300">
+          <p className="mt-2.5 text-sm leading-relaxed text-ink-400">
             The non-deterministic block — web fetches and LLM calls — never
             writes storage and never moves funds. It can only return a
             structured verdict for the validators to check. Once consensus
@@ -184,27 +189,27 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------- Dispute / finality ---------------- */}
-      <section>
-        <h2 className="text-2xl font-semibold tracking-tight text-ink-50">
-          Disputes, honestly framed
+      <section className="mx-auto mt-20 max-w-5xl">
+        <h2 className="text-3xl font-semibold tracking-tight text-ink-50 sm:text-4xl">
+          Disputes, honestly framed.
         </h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border border-ink-700 bg-ink-900 p-5">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-verdict-400">
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <div className="rounded-apple bg-white p-6 shadow-card">
+            <p className="text-[15px] font-semibold text-ink-50">
               Application dispute
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-300">
+            <p className="mt-2 text-sm leading-relaxed text-ink-400">
               Either party can dispute a verdict during the dispute window.
               The dispute does not overwrite anything: the original decision,
               evidence, and reasoning stay on-chain, and a fresh consensus
               round re-adjudicates everything with the dispute context added.
             </p>
           </div>
-          <div className="rounded-lg border border-ink-700 bg-ink-900 p-5">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-400">
+          <div className="rounded-apple bg-white p-6 shadow-card">
+            <p className="text-[15px] font-semibold text-ink-50">
               Protocol finality
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-300">
+            <p className="mt-2 text-sm leading-relaxed text-ink-400">
               Separately, GenLayer's Optimistic Democracy gives every
               transaction an appeal window at the protocol level before it
               becomes final. MilestoneJudge releases escrow only after both
@@ -215,18 +220,18 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------- CTA ---------------- */}
-      <section className="rounded-xl border border-verdict-500/30 bg-gradient-to-b from-verdict-500/10 to-transparent p-8">
-        <h2 className="text-xl font-semibold tracking-tight text-ink-50">
+      <section className="mx-auto mt-20 max-w-5xl rounded-apple bg-ink-50 px-8 py-14 text-center text-white shadow-pop sm:px-12">
+        <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           Put your milestone in front of the network.
         </h2>
-        <p className="mt-2 max-w-xl text-sm text-ink-300">
+        <p className="mx-auto mt-3 max-w-xl text-[17px] text-white/60">
           Define criteria in plain language, fund the escrow, and let
           validator consensus — not a platform moderator — decide whether the
           work is done.
         </p>
         <Link
           href="/create"
-          className="mt-5 inline-block rounded border border-verdict-500/70 bg-verdict-500/15 px-5 py-2.5 text-sm font-medium text-verdict-400 transition-colors hover:bg-verdict-500/25"
+          className="btn-pill mt-7 inline-block bg-white px-6 py-3 text-[15px] font-medium text-ink-50 hover:bg-white/90"
         >
           Create a milestone
         </Link>

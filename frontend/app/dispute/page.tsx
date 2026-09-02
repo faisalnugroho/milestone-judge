@@ -82,45 +82,45 @@ export default function DisputePage() {
   }
 
   const inputCls =
-    "w-full rounded border border-ink-600 bg-ink-950 px-3 py-2 text-sm text-ink-100 placeholder:text-ink-400 focus:border-verdict-500/60 focus:outline-none";
+    "w-full rounded-[12px] border border-black/10 bg-white px-3.5 py-2.5 text-[15px] text-ink-50 placeholder:text-ink-400 transition-shadow focus:border-verdict-400";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink-50">
+        <h1 className="text-3xl font-semibold tracking-tight text-ink-50">
           Dispute a verdict
         </h1>
-        <p className="mt-1 text-sm text-ink-400">
+        <p className="mt-1.5 text-[15px] text-ink-400">
           An application-level dispute: the original decision, evidence, and
           reasoning stay on-chain, and a fresh consensus round re-adjudicates
           everything with the dispute context added.
         </p>
       </div>
 
-      <Card className="space-y-4 p-5">
+      <Card className="space-y-4 p-6">
         <div>
-          <label className="mb-1 block text-xs font-medium text-ink-300">
+          <label className="mb-1.5 block text-xs font-medium text-ink-400">
             Milestone id
           </label>
           <input
-            className={`${inputCls} w-32 font-mono`}
+            className={`${inputCls} w-32 font-mono text-sm`}
             value={mid}
             onChange={(e) => setMid(e.target.value)}
             placeholder="e.g. 3"
           />
         </div>
         {lookupError && (
-          <p className="text-xs text-[#f08a8d]">{lookupError}</p>
+          <p className="text-xs text-fail">{lookupError}</p>
         )}
       </Card>
 
       {milestone && (
-        <Card className="space-y-3 p-5">
+        <Card className="space-y-4 p-6">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={milestone.status} />
             <Link
               href={`/milestone/${milestone.id}`}
-              className="text-sm font-medium text-ink-100 hover:text-verdict-400"
+              className="text-sm font-medium text-ink-50 transition-colors hover:text-verdict-600"
             >
               #{milestone.id} {milestone.title}
             </Link>
@@ -131,22 +131,22 @@ export default function DisputePage() {
               }
             />
           </div>
-          <p className="font-mono text-[11px] text-ink-400">
+          <p className="text-xs text-ink-400">
             dispute window ends {formatEpoch(milestone.dispute_deadline)}
           </p>
 
           {record ? (
-            <div className="space-y-3 border-t border-ink-700 pt-3">
+            <div className="space-y-3 border-t border-black/[0.08] pt-4">
               <SectionLabel>Existing dispute</SectionLabel>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <StatusBadge status={`DISPUTE_${record.status}`} />
-                <span className="font-mono text-[11px] text-ink-400">
+                <span className="text-xs text-ink-400">
                   opened {formatEpoch(record.opened_at)} by{" "}
                   {shortAddress(record.opened_by, 4)}
                 </span>
               </div>
               <p className="text-sm text-ink-300">{record.reason}</p>
-              <p className="font-mono text-[11px] text-ink-500">
+              <p className="text-xs text-ink-400">
                 original decision: {record.original_decision} (round{" "}
                 {record.original_round})
               </p>
@@ -154,22 +154,22 @@ export default function DisputePage() {
                 <button
                   onClick={resolve}
                   disabled={!isConnected || !write || tx.phase !== "idle"}
-                  className="rounded border border-verdict-500/70 bg-verdict-500/15 px-4 py-2 text-sm font-medium text-verdict-400 hover:bg-verdict-500/25 disabled:opacity-40"
+                  className="btn-pill bg-verdict-400 px-5 py-2.5 text-sm font-medium text-white hover:bg-verdict-600 disabled:opacity-30"
                 >
                   Trigger dispute resolution (fresh consensus round)
                 </button>
               )}
               {record.status === "RESOLVED" && record.resolution.decision && (
-                <div className="flex items-center gap-2 rounded border border-ink-700 bg-ink-950 px-3 py-2">
+                <div className="flex items-center gap-2.5 rounded-[12px] bg-black/[0.03] px-4 py-3">
                   <DecisionBadge decision={record.resolution.decision} />
-                  <span className="font-mono text-[11px] text-ink-400">
+                  <span className="text-xs text-ink-400">
                     resolved {formatEpoch(record.resolution.at ?? "0")}
                   </span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="space-y-3 border-t border-ink-700 pt-3">
+            <div className="space-y-3 border-t border-black/[0.08] pt-4">
               <SectionLabel>Open a dispute</SectionLabel>
               <textarea
                 className={`${inputCls} min-h-[70px]`}
@@ -178,7 +178,7 @@ export default function DisputePage() {
                 onChange={(e) => setReason(e.target.value)}
               />
               <input
-                className={`${inputCls} font-mono`}
+                className={`${inputCls} font-mono text-sm`}
                 placeholder="Optional supporting evidence URL (https://…)"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -197,7 +197,7 @@ export default function DisputePage() {
                   reason.trim().length < 10 ||
                   (url.trim() !== "" && !/^https?:\/\//.test(url.trim()))
                 }
-                className="rounded border border-verdict-500/70 bg-verdict-500/15 px-4 py-2 text-sm font-medium text-verdict-400 hover:bg-verdict-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+                className="btn-pill bg-verdict-400 px-5 py-2.5 text-sm font-medium text-white hover:bg-verdict-600 disabled:cursor-not-allowed disabled:opacity-30"
               >
                 Open dispute
               </button>
@@ -207,7 +207,7 @@ export default function DisputePage() {
       )}
 
       {error && (
-        <p className="rounded border border-fail/40 bg-[#2a1214] px-3 py-2 text-xs text-[#f08a8d]">
+        <p className="rounded-[12px] bg-fail/[0.07] px-4 py-3 text-xs text-fail">
           {error}
         </p>
       )}

@@ -12,18 +12,18 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-ink-950 font-sans text-ink-200 antialiased">
+      <body className="min-h-screen bg-[#f5f5f7] font-sans text-ink-200 antialiased">
         <WalletProvider>
           <NavBar />
-          <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
-          <footer className="border-t border-ink-800 px-4 py-6">
-            <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-2 text-xs text-ink-400 sm:flex-row sm:items-center">
+          <main className="mx-auto max-w-5xl px-5 py-10">{children}</main>
+          <footer className="border-t border-black/[0.08] bg-[#f5f5f7] px-5 py-8">
+            <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-2 text-xs text-ink-400 sm:flex-row sm:items-center">
               <span>
                 MilestoneJudge — escrow and adjudication executed by a GenLayer
                 Intelligent Contract under validator consensus.
               </span>
               <a
-                className="hover:text-ink-200"
+                className="transition-colors hover:text-verdict-600"
                 href="https://docs.genlayer.com"
                 target="_blank"
                 rel="noreferrer"

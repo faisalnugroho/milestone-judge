@@ -3,15 +3,59 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  font-feature-settings: "ss01", "cv05";
+  background: #f5f5f7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01";
+  letter-spacing: -0.01em;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.022em;
 }
 
 ::selection {
-  background: rgba(237, 175, 18, 0.35);
+  background: rgba(0, 113, 227, 0.18);
+}
+
+/* Apple-style frosted nav */
+.frost-nav {
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* Apple-style pill button */
+.btn-pill {
+  border-radius: 980px;
+  transition: all 0.18s ease;
+}
+.btn-pill:active {
+  transform: scale(0.97);
+}
+
+/* Hairline focus ring, Apple-style */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid rgba(0, 113, 227, 0.55);
+  outline-offset: 1px;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3.5px rgba(0, 113, 227, 0.14);
+}
+
+/* iOS-style grouped-list separators */
+.grouped-list > * + * {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 @media (prefers-reduced-motion: reduce) {

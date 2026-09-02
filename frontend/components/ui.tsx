@@ -5,30 +5,32 @@ import type { MilestoneStatus, TxState } from "@/lib/types";
 import { timeLeft } from "@/lib/money";
 
 // ---------------------------------------------------------------------------
-// Status badge
+// Status badge — iOS-style tinted capsule
 // ---------------------------------------------------------------------------
 
 const STATUS_STYLE: Record<string, string> = {
-  CREATED: "bg-ink-800 text-ink-300 border-ink-600",
-  FUNDED: "bg-ink-800 text-ink-200 border-ink-600",
-  SUBMITTED: "bg-[#1d2b4d] text-[#9db8f0] border-[#33426e]",
-  APPROVED: "bg-[#0e2a1c] text-[#5fd39a] border-[#2fbf71]/40",
-  REJECTED: "bg-[#2a1214] text-[#f08a8d] border-[#e5484d]/40",
-  INSUFFICIENT_EVIDENCE: "bg-[#2a2212] text-[#f0c66a] border-[#f5a623]/40",
-  DISPUTED: "bg-[#2a1a2e] text-[#d8a0e8] border-[#b45cc7]/40",
-  RELEASED: "bg-[#0e2a1c] text-[#5fd39a] border-[#2fbf71]/40",
-  REFUNDED: "bg-[#1a2338] text-[#a8b4d4] border-[#33426e]",
-  CANCELLED: "bg-ink-850 text-ink-400 border-ink-700",
-  EXPIRED: "bg-ink-850 text-ink-400 border-ink-700",
+  CREATED: "bg-black/[0.05] text-ink-500",
+  FUNDED: "bg-verdict-400/10 text-verdict-600",
+  SUBMITTED: "bg-verdict-400/10 text-verdict-600",
+  APPROVED: "bg-pass/12 text-[#1e8e3e]",
+  REJECTED: "bg-fail/10 text-fail",
+  INSUFFICIENT_EVIDENCE: "bg-warn/12 text-[#b25f00]",
+  DISPUTED: "bg-dispute/10 text-dispute",
+  RELEASED: "bg-pass/12 text-[#1e8e3e]",
+  REFUNDED: "bg-black/[0.05] text-ink-400",
+  CANCELLED: "bg-black/[0.05] text-ink-500",
+  EXPIRED: "bg-black/[0.05] text-ink-500",
+  DISPUTE_OPEN: "bg-dispute/10 text-dispute",
+  DISPUTE_RESOLVED: "bg-pass/12 text-[#1e8e3e]",
 };
 
 export function StatusBadge({ status }: { status: MilestoneStatus | string }) {
-  const style = STATUS_STYLE[status] ?? "bg-ink-800 text-ink-300 border-ink-600";
+  const style = STATUS_STYLE[status] ?? "bg-black/[0.05] text-ink-500";
   return (
     <span
-      className={`inline-flex items-center rounded border px-2 py-0.5 font-mono text-[11px] font-medium tracking-wide uppercase ${style}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${style}`}
     >
-      {status.replace(/_/g, " ")}
+      {status.replace(/_/g, " ").toLowerCase()}
     </span>
   );
 }
@@ -36,21 +38,21 @@ export function StatusBadge({ status }: { status: MilestoneStatus | string }) {
 export function DecisionBadge({ decision }: { decision: string }) {
   if (decision === "APPROVED") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded border border-pass/40 bg-[#0e2a1c] px-2.5 py-1 font-mono text-xs font-semibold text-[#5fd39a]">
-        ✓ APPROVED
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-pass/12 px-3 py-1 text-xs font-semibold text-[#1e8e3e]">
+        ✓ Approved
       </span>
     );
   }
   if (decision === "REJECTED") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded border border-fail/40 bg-[#2a1214] px-2.5 py-1 font-mono text-xs font-semibold text-[#f08a8d]">
-        ✕ REJECTED
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-fail/10 px-3 py-1 text-xs font-semibold text-fail">
+        ✕ Rejected
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded border border-warn/40 bg-[#2a2212] px-2.5 py-1 font-mono text-xs font-semibold text-[#f0c66a]">
-      ? {decision.replace(/_/g, " ")}
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-warn/12 px-3 py-1 text-xs font-semibold text-[#b25f00]">
+      ? {decision.replace(/_/g, " ").toLowerCase()}
     </span>
   );
 }
@@ -58,20 +60,20 @@ export function DecisionBadge({ decision }: { decision: string }) {
 export function CriterionStatusPill({ status }: { status: string }) {
   if (status === "PASS") {
     return (
-      <span className="rounded border border-pass/40 bg-[#0e2a1c] px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-[#5fd39a]">
+      <span className="rounded-full bg-pass/12 px-2 py-0.5 text-[10px] font-semibold text-[#1e8e3e]">
         PASS
       </span>
     );
   }
   if (status === "FAIL") {
     return (
-      <span className="rounded border border-fail/40 bg-[#2a1214] px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-[#f08a8d]">
+      <span className="rounded-full bg-fail/10 px-2 py-0.5 text-[10px] font-semibold text-fail">
         FAIL
       </span>
     );
   }
   return (
-    <span className="rounded border border-warn/40 bg-[#2a2212] px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-[#f0c66a]">
+    <span className="rounded-full bg-warn/12 px-2 py-0.5 text-[10px] font-semibold text-[#b25f00]">
       INSUFFICIENT
     </span>
   );
@@ -102,14 +104,14 @@ export function GenAmount({
   };
   const cls =
     size === "lg"
-      ? "text-2xl font-semibold"
+      ? "text-3xl font-semibold tracking-tight"
       : size === "sm"
         ? "text-sm"
         : "text-lg font-medium";
   return (
-    <span className={`font-mono ${cls} text-verdict-400 tabular-nums`}>
+    <span className={`${cls} text-ink-50 tabular-nums`}>
       {fmt(wei)}{" "}
-      <span className="text-[0.7em] text-ink-400">GEN</span>
+      <span className="text-[0.62em] font-medium text-ink-400">GEN</span>
     </span>
   );
 }
@@ -122,13 +124,13 @@ const PHASE_LABEL: Record<string, string> = {
   idle: "Idle",
   signing: "Waiting for wallet signature…",
   pending: "Transaction submitted — awaiting network",
-  proposing: "PROPOSING — leader executing",
-  committing: "COMMITTING — validators voting",
-  revealing: "REVEALING — votes revealed",
-  accepted: "ACCEPTED — provisional consensus",
-  finalized: "FINALIZED — consensus complete",
-  undetermined: "UNDETERMINED — consensus failed, no state change",
-  failed: "FAILED",
+  proposing: "Proposing — leader executing",
+  committing: "Committing — validators voting",
+  revealing: "Revealing — votes revealed",
+  accepted: "Accepted — provisional consensus",
+  finalized: "Finalized — consensus complete",
+  undetermined: "Undetermined — consensus failed, no state change",
+  failed: "Failed",
 };
 
 export function TxTracker({ tx, label }: { tx: TxState; label?: string }) {
@@ -137,25 +139,25 @@ export function TxTracker({ tx, label }: { tx: TxState; label?: string }) {
   const isDone = tx.phase === "finalized";
   return (
     <div
-      className={`rounded border px-3 py-2 font-mono text-xs ${
+      className={`rounded-apple px-4 py-3 text-xs ${
         isError
-          ? "border-fail/40 bg-[#2a1214] text-[#f08a8d]"
+          ? "bg-fail/[0.07] text-fail"
           : isDone
-            ? "border-pass/40 bg-[#0e2a1c] text-[#5fd39a]"
-            : "border-ink-600 bg-ink-850 text-ink-300"
+            ? "bg-pass/[0.08] text-[#1e8e3e]"
+            : "bg-black/[0.04] text-ink-400"
       }`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         {!isError && !isDone && (
           <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-verdict-400" />
         )}
-        <span>
+        <span className="font-medium">
           {label ? `${label}: ` : ""}
           {PHASE_LABEL[tx.phase]}
         </span>
       </div>
       {tx.hash && (
-        <div className="mt-1 truncate text-[10px] text-ink-400">
+        <div className="mt-1 truncate font-mono text-[10px] text-ink-400">
           tx {tx.hash}
         </div>
       )}
@@ -167,7 +169,7 @@ export function TxTracker({ tx, label }: { tx: TxState; label?: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Cards / layout primitives
+// Cards / layout primitives — white cards, continuous corners
 // ---------------------------------------------------------------------------
 
 export function Card({
@@ -179,7 +181,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-lg border border-ink-700 bg-ink-900 ${className}`}
+      className={`rounded-apple bg-white shadow-card ${className}`}
     >
       {children}
     </div>
@@ -188,7 +190,7 @@ export function Card({
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-2 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-400">
+    <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400">
       {children}
     </div>
   );
@@ -204,16 +206,16 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-ink-700 bg-ink-900/50 px-6 py-14 text-center">
-      <p className="text-sm font-medium text-ink-200">{title}</p>
-      {hint && <p className="mt-1 max-w-sm text-xs text-ink-400">{hint}</p>}
-      {action && <div className="mt-4">{action}</div>}
+    <div className="flex flex-col items-center justify-center rounded-apple bg-white px-6 py-16 text-center shadow-card">
+      <p className="text-[17px] font-semibold text-ink-50">{title}</p>
+      {hint && <p className="mt-1.5 max-w-sm text-sm text-ink-400">{hint}</p>}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Milestone list row (dashboard / history)
+// Milestone list row (dashboard / history) — iOS grouped-list style
 // ---------------------------------------------------------------------------
 
 export function MilestoneRow({
@@ -234,22 +236,22 @@ export function MilestoneRow({
   return (
     <Link
       href={`/milestone/${id}`}
-      className="flex items-center justify-between gap-3 rounded-lg border border-ink-700 bg-ink-900 px-4 py-3 transition-colors hover:border-ink-600 hover:bg-ink-850"
+      className="flex items-center justify-between gap-3 rounded-apple bg-white px-5 py-4 shadow-card transition-all hover:shadow-pop"
     >
       <div className="min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <span className="font-mono text-[11px] text-ink-400">#{id}</span>
           {role && (
-            <span className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-[10px] text-ink-300">
+            <span className="rounded-full bg-black/[0.05] px-2 py-0.5 text-[10px] font-medium text-ink-500">
               {role}
             </span>
           )}
-          <span className="truncate text-sm font-medium text-ink-100">
+          <span className="truncate text-[15px] font-medium text-ink-50">
             {title}
           </span>
         </div>
         <div className="mt-1 flex items-center gap-3 text-xs text-ink-400">
-          <span className="font-mono tabular-nums text-verdict-400/80">
+          <span className="font-medium tabular-nums text-ink-50">
             {(BigInt(amountWei || "0") / 10n ** 18n).toString()} GEN
           </span>
           <span>deadline {timeLeft(deadlineEpoch)}</span>

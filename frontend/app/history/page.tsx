@@ -52,25 +52,23 @@ export default function HistoryPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink-50">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink-50">
             History
           </h1>
-          <p className="mt-1 text-sm text-ink-400">
+          <p className="mt-1.5 text-[15px] text-ink-400">
             Completed milestones and their outcomes, settled on-chain.
           </p>
         </div>
         <button
           onClick={load}
-          className="rounded border border-ink-600 px-3 py-1.5 text-xs text-ink-300 hover:border-ink-500 hover:text-ink-100"
+          className="rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-medium text-ink-50 shadow-card transition-colors hover:bg-black/[0.03]"
         >
           Refresh
         </button>
       </div>
 
       {error && (
-        <Card className="border-fail/40 bg-[#2a1214] p-4 text-sm text-[#f08a8d]">
-          {error}
-        </Card>
+        <Card className="bg-fail/[0.06] p-5 text-sm text-fail">{error}</Card>
       )}
       {loading && <p className="text-sm text-ink-400">Loading…</p>}
 
@@ -100,11 +98,11 @@ export default function HistoryPage() {
       )}
 
       {!loading && !error && completed.length > 0 && (
-        <details className="rounded-lg border border-ink-700 bg-ink-900 p-4">
-          <summary className="cursor-pointer text-xs text-ink-300">
+        <details className="rounded-apple bg-white p-5 shadow-card">
+          <summary className="cursor-pointer text-xs font-medium text-verdict-600">
             Show all milestones including active ones ({items.length} total)
           </summary>
-          <div className="mt-3 space-y-3">
+          <div className="mt-4 space-y-3">
             {items
               .filter((m) => !TERMINAL.includes(m.status))
               .map((m) => (

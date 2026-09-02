@@ -106,10 +106,10 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink-50">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink-50">
             Dashboard
           </h1>
-          <p className="mt-1 text-sm text-ink-400">
+          <p className="mt-1.5 text-[15px] text-ink-400">
             {walletOnly
               ? `Milestones where ${address.slice(0, 8)}… is client or worker.`
               : "Connect your wallet to see your milestones."}
@@ -117,51 +117,49 @@ export default function DashboardPage() {
         </div>
         <button
           onClick={load}
-          className="rounded border border-ink-600 px-3 py-1.5 text-xs text-ink-300 hover:border-ink-500 hover:text-ink-100"
+          className="rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-medium text-ink-50 shadow-card transition-colors hover:bg-black/[0.03]"
         >
           Refresh
         </button>
       </div>
 
       {error && (
-        <Card className="border-fail/40 bg-[#2a1214] p-4 text-sm text-[#f08a8d]">
-          {error}
-        </Card>
+        <Card className="bg-fail/[0.06] p-5 text-sm text-fail">{error}</Card>
       )}
       {loading && <p className="text-sm text-ink-400">Loading…</p>}
 
       {data && (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-            <Card className="p-4">
+            <Card className="p-5">
               <SectionLabel>Total</SectionLabel>
-              <p className="font-mono text-2xl font-semibold text-ink-100">
+              <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink-50">
                 {mine.length}
               </p>
               <p className="mt-1 text-xs text-ink-400">milestones</p>
             </Card>
-            <Card className="p-4">
+            <Card className="p-5">
               <SectionLabel>Active</SectionLabel>
-              <p className="font-mono text-2xl font-semibold text-ink-100">
+              <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink-50">
                 {active.length}
               </p>
               <p className="mt-1 text-xs text-ink-400">in progress</p>
             </Card>
-            <Card className="p-4">
+            <Card className="p-5">
               <SectionLabel>Escrow</SectionLabel>
               <GenAmount wei={locked} />
               <p className="mt-1 text-xs text-ink-400">locked in your deals</p>
             </Card>
-            <Card className="p-4">
+            <Card className="p-5">
               <SectionLabel>Reviews</SectionLabel>
-              <p className="font-mono text-2xl font-semibold text-ink-100">
+              <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink-50">
                 {pendingReviews.length}
               </p>
               <p className="mt-1 text-xs text-ink-400">awaiting verdict/finality</p>
             </Card>
-            <Card className="p-4">
+            <Card className="p-5">
               <SectionLabel>Disputes</SectionLabel>
-              <p className="font-mono text-2xl font-semibold text-ink-100">
+              <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink-50">
                 {disputes.length}
               </p>
               <p className="mt-1 text-xs text-ink-400">open</p>
@@ -169,21 +167,21 @@ export default function DashboardPage() {
           </div>
 
           {data.stats && (
-            <Card className="flex flex-wrap items-center gap-x-8 gap-y-2 p-4">
+            <Card className="flex flex-wrap items-center gap-x-8 gap-y-3 p-5">
               <div>
                 <SectionLabel>Network (all users)</SectionLabel>
-                <p className="font-mono text-sm text-ink-200">
+                <p className="text-sm text-ink-200">
                   {data.stats.total_milestones} milestones ·{" "}
                   {data.stats.locked_wei !== "0"
                     ? `${(BigInt(data.stats.locked_wei) / 10n ** 18n).toString()} GEN locked`
                     : "no escrow locked"}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 {Object.entries(data.stats.counts).map(([st, n]) => (
                   <span key={st} className="flex items-center gap-1.5">
                     <StatusBadge status={st} />
-                    <span className="font-mono text-xs text-ink-300">{n}</span>
+                    <span className="text-xs tabular-nums text-ink-400">{n}</span>
                   </span>
                 ))}
               </div>
@@ -202,7 +200,7 @@ export default function DashboardPage() {
               action={
                 <Link
                   href="/create"
-                  className="rounded border border-verdict-500/70 bg-verdict-500/15 px-4 py-2 text-sm font-medium text-verdict-400 hover:bg-verdict-500/25"
+                  className="btn-pill bg-verdict-400 px-5 py-2.5 text-sm font-medium text-white hover:bg-verdict-600"
                 >
                   Create a milestone
                 </Link>
@@ -235,7 +233,7 @@ export default function DashboardPage() {
               {completed.length > 0 && (
                 <p className="pt-1 text-xs text-ink-400">
                   {completed.length} completed.{" "}
-                  <Link href="/history" className="text-verdict-400 hover:underline">
+                  <Link href="/history" className="text-verdict-600 hover:underline">
                     View history →
                   </Link>
                 </p>

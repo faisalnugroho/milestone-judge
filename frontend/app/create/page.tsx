@@ -126,16 +126,16 @@ export default function CreateMilestonePage() {
   }
 
   const inputCls =
-    "w-full rounded border border-ink-600 bg-ink-950 px-3 py-2 text-sm text-ink-100 placeholder:text-ink-400 focus:border-verdict-500/60 focus:outline-none";
-  const labelCls = "mb-1 block text-xs font-medium text-ink-300";
+    "w-full rounded-[12px] border border-black/10 bg-white px-3.5 py-2.5 text-[15px] text-ink-50 placeholder:text-ink-400 transition-shadow focus:border-verdict-400";
+  const labelCls = "mb-1.5 block text-xs font-medium text-ink-400";
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink-50">
+        <h1 className="text-3xl font-semibold tracking-tight text-ink-50">
           Create a milestone
         </h1>
-        <p className="mt-1 text-sm text-ink-400">
+        <p className="mt-1.5 text-[15px] text-ink-400">
           Define the work, the acceptance criteria, and the escrow. The
           contract will hold your GEN until a validator-consensus verdict
           settles it.
@@ -143,16 +143,16 @@ export default function CreateMilestonePage() {
       </div>
 
       {!isConnected && (
-        <Card className="border-warn/40 bg-[#2a2212] p-4 text-sm text-[#f0c66a]">
+        <Card className="bg-warn/[0.07] p-4 text-sm text-[#b25f00]">
           Connect your wallet first — the milestone is created by your
           address, and escrow is funded from it.
         </Card>
       )}
 
-      <Card className="space-y-5 p-5">
+      <Card className="space-y-6 p-7">
         <div>
           <label className={labelCls} htmlFor="mj-title">
-            Title <span className="text-ink-400">(3–200 chars)</span>
+            Title <span className="text-ink-400/70">(3–200 chars)</span>
           </label>
           <input
             id="mj-title"
@@ -166,7 +166,7 @@ export default function CreateMilestonePage() {
 
         <div>
           <label className={labelCls} htmlFor="mj-desc">
-            Description <span className="text-ink-400">(what the work is)</span>
+            Description <span className="text-ink-400/70">(what the work is)</span>
           </label>
           <textarea
             id="mj-desc"
@@ -185,13 +185,13 @@ export default function CreateMilestonePage() {
             </label>
             <input
               id="mj-worker"
-              className={`${inputCls} font-mono`}
+              className={`${inputCls} font-mono text-sm`}
               value={worker}
               onChange={(e) => setWorker(e.target.value)}
               placeholder="0x…"
             />
             {worker.trim() !== "" && !workerValid && (
-              <p className="mt-1 text-xs text-[#f08a8d]">
+              <p className="mt-1.5 text-xs text-fail">
                 Must be a 0x-prefixed 40-hex address.
               </p>
             )}
@@ -202,14 +202,14 @@ export default function CreateMilestonePage() {
             </label>
             <input
               id="mj-amount"
-              className={`${inputCls} font-mono`}
+              className={`${inputCls} font-mono text-sm`}
               value={amountGen}
               onChange={(e) => setAmountGen(e.target.value)}
               placeholder="5"
               inputMode="decimal"
             />
             {amountGen.trim() !== "" && !amountWei && (
-              <p className="mt-1 text-xs text-[#f08a8d]">
+              <p className="mt-1.5 text-xs text-fail">
                 Invalid amount (max 18 decimals).
               </p>
             )}
@@ -218,7 +218,7 @@ export default function CreateMilestonePage() {
 
         <div>
           <label className={labelCls} htmlFor="mj-deadline">
-            Deadline <span className="text-ink-400">(worker must submit before)</span>
+            Deadline <span className="text-ink-400/70">(worker must submit before)</span>
           </label>
           <input
             id="mj-deadline"
@@ -228,7 +228,7 @@ export default function CreateMilestonePage() {
             onChange={(e) => setDeadlineLocal(e.target.value)}
           />
           {deadlineLocal && !deadlineValid && (
-            <p className="mt-1 text-xs text-[#f08a8d]">
+            <p className="mt-1.5 text-xs text-fail">
               Deadline must be at least 1 hour in the future.
             </p>
           )}
@@ -238,7 +238,7 @@ export default function CreateMilestonePage() {
           <div className="mb-2 flex items-center justify-between">
             <span className={labelCls}>
               Acceptance criteria{" "}
-              <span className="text-ink-400">
+              <span className="text-ink-400/70">
                 (each judged independently by the network)
               </span>
             </span>
@@ -254,7 +254,7 @@ export default function CreateMilestonePage() {
                       ]
                 )
               }
-              className="rounded border border-ink-600 px-2 py-1 text-xs text-ink-300 hover:border-ink-500"
+              className="rounded-full px-3 py-1 text-xs font-medium text-verdict-600 transition-colors hover:bg-verdict-400/[0.08]"
             >
               + Add criterion
             </button>
@@ -263,7 +263,7 @@ export default function CreateMilestonePage() {
             {criteria.map((c, i) => (
               <div key={i} className="flex gap-2">
                 <input
-                  className={`${inputCls} w-20 shrink-0 font-mono`}
+                  className={`${inputCls} w-20 shrink-0 font-mono text-sm`}
                   value={c.id}
                   onChange={(e) =>
                     setCriteria((cs) =>
@@ -296,10 +296,10 @@ export default function CreateMilestonePage() {
                       )
                     )
                   }
-                  className={`shrink-0 rounded border px-2 py-1 font-mono text-[10px] uppercase ${
+                  className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold transition-colors ${
                     c.mandatory
-                      ? "border-verdict-500/50 text-verdict-400"
-                      : "border-ink-600 text-ink-400"
+                      ? "bg-verdict-400/10 text-verdict-600"
+                      : "bg-black/[0.05] text-ink-400"
                   }`}
                   title="Mandatory criteria block approval on FAIL"
                 >
@@ -311,7 +311,7 @@ export default function CreateMilestonePage() {
                     onClick={() =>
                       setCriteria((cs) => cs.filter((_, j) => j !== i))
                     }
-                    className="shrink-0 rounded border border-ink-600 px-2 py-1 text-xs text-ink-400 hover:border-fail/50 hover:text-[#f08a8d]"
+                    className="shrink-0 rounded-full px-2.5 py-1 text-xs text-ink-400 transition-colors hover:bg-fail/10 hover:text-fail"
                     aria-label="Remove criterion"
                   >
                     ✕
@@ -321,7 +321,7 @@ export default function CreateMilestonePage() {
             ))}
           </div>
           {!criteriaValid && criteria.some((c) => c.text.trim() !== "") && (
-            <p className="mt-2 text-xs text-[#f08a8d]">
+            <p className="mt-2 text-xs text-fail">
               Every criterion needs a unique id and text of at least 5 chars.
             </p>
           )}
@@ -330,9 +330,7 @@ export default function CreateMilestonePage() {
         <div>
           <label className={labelCls} htmlFor="mj-evreq">
             Evidence requirements{" "}
-            <span className="text-ink-400">
-              (what kind of proof you expect)
-            </span>
+            <span className="text-ink-400/70">(what kind of proof you expect)</span>
           </label>
           <textarea
             id="mj-evreq"
@@ -347,7 +345,7 @@ export default function CreateMilestonePage() {
         <div>
           <label className={labelCls} htmlFor="mj-urls">
             Optional evidence URLs{" "}
-            <span className="text-ink-400">(reference material, max 5)</span>
+            <span className="text-ink-400/70">(reference material, max 5)</span>
           </label>
           <input
             id="mj-urls"
@@ -356,20 +354,20 @@ export default function CreateMilestonePage() {
             onChange={(e) => setClientUrls(e.target.value)}
             placeholder="https://github.com/org/spec  https://spec.example.com"
           />
-          <p className="mt-1 text-xs text-ink-400">
+          <p className="mt-1.5 text-xs text-ink-400">
             Space or comma separated. These are fetched by validators during
             adjudication as context.
           </p>
         </div>
 
         {formError && (
-          <p className="rounded border border-fail/40 bg-[#2a1214] px-3 py-2 text-xs text-[#f08a8d]">
+          <p className="rounded-[12px] bg-fail/[0.07] px-4 py-3 text-xs text-fail">
             {formError}
           </p>
         )}
         <TxTracker tx={tx} label="Create milestone" />
 
-        <div className="flex items-center justify-between gap-3 border-t border-ink-700 pt-4">
+        <div className="flex items-center justify-between gap-3 border-t border-black/[0.08] pt-5">
           <p className="text-xs text-ink-400">
             {amountWei
               ? `You will fund ${amountWei / 10n ** 18n} GEN after creating.`
@@ -378,7 +376,7 @@ export default function CreateMilestonePage() {
           <button
             disabled={!canSubmit}
             onClick={submit}
-            className="rounded border border-verdict-500/70 bg-verdict-500/15 px-5 py-2.5 text-sm font-medium text-verdict-400 transition-colors hover:bg-verdict-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+            className="btn-pill bg-verdict-400 px-5 py-2.5 text-sm font-medium text-white hover:bg-verdict-600 disabled:cursor-not-allowed disabled:opacity-30"
           >
             Create milestone
           </button>
