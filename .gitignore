@@ -18,6 +18,5 @@ frontend/node_modules/
 
 # Build artifacts
 artifacts/
-docs/deployment_log.json
 scripts/smoke_worker.json
 frontend/tsconfig.tsbuildinfo
