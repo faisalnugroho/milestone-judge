@@ -8,7 +8,7 @@ production Next.js dApp on top.
 
 **Live (Studionet):** contract
 [`0x7C6e515187c47202c7330384613229F75B180814`](https://explorer-studio.genlayer.com/address/0x7C6e515187c47202c7330384613229F75B180814)
-· dApp https://frontend-five-tau-86.vercel.app · smoke 6/6 PASS
+· dApp https://milestone-judge.vercel.app · smoke 6/6 PASS
 (3× APPROVED determinism, negative → REJECTED, dispute round → live
 `emit_transfer` release, window enforcement)
 

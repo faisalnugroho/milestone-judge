@@ -6,7 +6,7 @@
 |---|---|
 | Contract | `0x7C6e515187c47202c7330384613229F75B180814` |
 | Explorer | https://explorer-studio.genlayer.com/address/0x7C6e515187c47202c7330384613229F75B180814 |
-| Frontend | https://frontend-five-tau-86.vercel.app |
+| Frontend | https://milestone-judge.vercel.app |
 | Smoke protocol | 6/6 PASS — full log in `docs/deployment_log.json` |
 
 Smoke results (all with FULL consensus, real validators, real LLM):
