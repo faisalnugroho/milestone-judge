@@ -1,0 +1,23 @@
+# Secrets / keyfiles — never commit
+scripts/smoke_deployer.json
+*.key
+.env
+.env.local
+frontend/.env.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+frontend/.next/
+frontend/node_modules/
+
+# Build artifacts
+artifacts/
+docs/deployment_log.json
+scripts/smoke_worker.json
+frontend/tsconfig.tsbuildinfo
