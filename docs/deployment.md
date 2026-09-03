@@ -4,8 +4,8 @@
 
 | Item | Value |
 |---|---|
-| Contract | `0xc052de2633cf11BaC85Fa915264D7189A8c60482` |
-| Explorer | https://explorer-studio.genlayer.com/address/0xc052de2633cf11BaC85Fa915264D7189A8c60482 |
+| Contract | `0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1` |
+| Explorer | https://explorer-studio.genlayer.com/address/0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1 |
 | Frontend | https://milestone-judge.vercel.app |
 | Smoke protocol | see `docs/deployment_log.json` (updated by each run) |
 

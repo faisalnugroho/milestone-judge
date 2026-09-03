@@ -1,7 +1,7 @@
 {
   "deploy": {
-    "tx_hash": "0x2bc06864543b4560299c55002708de9ae3e26ee3535ad80cee623f85904c43b6",
-    "address": "0xc052de2633cf11BaC85Fa915264D7189A8c60482",
+    "tx_hash": "0xa7add21458a34612774b557e5ff066ff41b39237c5eb3bbaa664fef10958f4eb",
+    "address": "0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1",
     "client": "0x7590e9f5e23293752C712618fa3082FA07C596F8",
     "worker": "0x457703EE8B709449A0609a7E100F27082BD4Bdcc"
   },
@@ -18,11 +18,11 @@
       "refusal_payload": "dispute response window is still open",
       "milestone_status_after": "DISPUTED",
       "escrow_locked": true,
-      "response_deadline": "1788538256",
+      "response_deadline": "1788542679",
       "contract_balance_locked_wei": "40000000000000000",
-      "tx_open": "0xeb217aab16f1d618aef59afcd3348ae7b7103766489f82a1bdbb7ce5755a579f",
-      "tx_rebuttal": "0xcb9f950f30507ed2e41b27461b71a4b44049066e8acaa5bba7c04f7e603215b9",
-      "tx_resolve_refused": "0x7596ef3c3619efbe1940a9fa7e39438ffdbec7ad0252c947c2a493358958ec9e",
+      "tx_open": "0xd0c25aa9c0603514d89d714f954f0f1e0ac62e2af90dbae3dd722326bb117640",
+      "tx_rebuttal": "0xd4978a42a1840beeb2fef3c370924163c91425d59ab417efee74071da00398f3",
+      "tx_resolve_refused": "0x55516ced4c746cfca8248bf5964b68484657e53cee7e998346770ff1f3a87b95",
       "ok": true
     },
     "finalize_window_enforced": {
@@ -35,7 +35,7 @@
       {
         "milestone": "1",
         "verdict": "APPROVED",
-        "secs": 19.4,
+        "secs": 21.8,
         "verdict_full": {
           "decision": "APPROVED",
           "evidence_quality": "HIGH",
@@ -43,28 +43,28 @@
           "rule": "all_mandatory_pass_quality_HIGH",
           "statuses": [
             {
-              "evidence": "The HTML content from the provided URL contains a <h1> tag with the text 'Ship Faster' and a <title> tag containing 'Ship Faster \u2014 Q3 Launch Landing Page'.",
+              "evidence": "HTML contains <h1>Ship Faster</h1> confirming the hero headline.",
               "id": "c1",
-              "reason": "The fetched content directly matches the required hero headline specified in the criterion.",
+              "reason": "The fetched page at the HTTPS URL displays the required hero headline, satisfying criterion c1.",
               "status": "PASS"
             },
             {
-              "evidence": "The fetched content includes the text: 'Form submissions reach the ops inbox. Test receipt #42 confirmed: a submission was sent from this form and received by ops.'",
+              "evidence": "Paragraph states 'Form submissions reach the ops inbox. Test receipt #42 confirmed: a submission was sent from this form and received by ops.'",
               "id": "c2",
-              "reason": "The page explicitly states that a test submission receipt was received by the ops inbox, satisfying the verification requirement.",
+              "reason": "The page explicitly confirms a test receipt was received by the ops inbox, meeting criterion c2.",
               "status": "PASS"
             }
           ],
-          "summary": "The provided URL was successfully fetched and contains the specific text and headers required by both mandatory criteria. The hero headline is present as requested, and the page explicitly confirms the receipt of the test submission to the ops inbox."
+          "summary": "Both acceptance criteria are satisfied by the fetched page content, which shows the required hero headline and confirms a test form submission receipt, indicating the landing page is live and the contact form is correctly wired."
         },
-        "tx_adjudicate": "0xbb110a059fb22209c85b45d82207a45ec7eb9e77d6d979b2f1bb32f3bf4ad101",
+        "tx_adjudicate": "0x7a7d43fc60d536c7a8fbb7d2f617e904404c22045cdab3dee036268e7a485c05",
         "expected": "APPROVED",
         "match": true
       },
       {
         "milestone": "2",
         "verdict": "APPROVED",
-        "secs": 21.2,
+        "secs": 64.4,
         "verdict_full": {
           "decision": "APPROVED",
           "evidence_quality": "HIGH",
@@ -72,28 +72,28 @@
           "rule": "all_mandatory_pass_quality_HIGH",
           "statuses": [
             {
-              "evidence": "Evidence 1 is an HTTPS URL page whose fetched HTML includes <h1>Ship Faster</h1> and title \u201cShip Faster \u2014 Q3 Launch Landing Page\u201d.",
+              "evidence": "The page title contains 'Ship Faster' and the <h1> tag explicitly displays the hero headline 'Ship Faster'.",
               "id": "c1",
-              "reason": "The fetched content directly shows the submitted HTTPS page is live and displays the required hero headline \u201cShip Faster\u201d.",
+              "reason": "The fetched content directly matches the required headline 'Ship Faster' on the live URL provided.",
               "status": "PASS"
             },
             {
-              "evidence": "Evidence 1 states: \u201cForm submissions reach the ops inbox. Test receipt #42 confirmed: a submission was sent from this form and received by ops.\u201d",
+              "evidence": "The document body contains the text: 'Test receipt #42 confirmed: a submission was sent from this form and received by ops.'",
               "id": "c2",
-              "reason": "The page explicitly states that a test submission receipt was received by the ops inbox, satisfying the criterion as written.",
+              "reason": "The evidence explicitly states that a test submission receipt was received by the ops inbox as required by the criterion.",
               "status": "PASS"
             }
           ],
-          "summary": "The fetched HTTPS page directly contains the required hero headline and an explicit statement that form submissions reach the ops inbox with test receipt #42 confirmed. Both criteria are directly supported by the provided evidence."
+          "summary": "The provided evidence directly corresponds to the acceptance criteria. The landing page displays the correct hero headline and includes the specific test receipt confirmation required to verify the contact form functionality. All mandatory criteria are satisfied by the fetched content."
         },
-        "tx_adjudicate": "0xbfe50a14f54fe8e0881ee1d0a1f37ad23682fe73af384920f6a4cfafba372a7c",
+        "tx_adjudicate": "0xa5b2bf2628229915638aac4887cd879d66db34021327b20c86c16266ebc97e46",
         "expected": "APPROVED",
         "match": true
       },
       {
         "milestone": "3",
         "verdict": "APPROVED",
-        "secs": 23.1,
+        "secs": 35.3,
         "verdict_full": {
           "decision": "APPROVED",
           "evidence_quality": "HIGH",
@@ -101,28 +101,28 @@
           "rule": "all_mandatory_pass_quality_HIGH",
           "statuses": [
             {
-              "evidence": "Fetched HTTPS page content from https://faisalnugroho.github.io/escrow-evidence/index-approved.html includes <h1>Ship Faster</h1>.",
+              "evidence": "Fetched HTML from the submitted HTTPS URL contains <h1>Ship Faster</h1> and page title 'Ship Faster \u2014 Q3 Launch Landing Page'.",
               "id": "c1",
-              "reason": "The provided fetched content is from the submitted HTTPS URL and directly shows the hero headline 'Ship Faster', satisfying the criterion.",
+              "reason": "The evidence directly shows the landing page is present at the submitted HTTPS URL and displays the required hero headline 'Ship Faster'.",
               "status": "PASS"
             },
             {
-              "evidence": "Page text states: 'Form submissions reach the ops inbox. Test receipt #42 confirmed: a submission was sent from this form and received by ops.'",
+              "evidence": "The page text states: 'Form submissions reach the ops inbox. Test receipt #42 confirmed: a submission was sent from this form and received by ops.'",
               "id": "c2",
-              "reason": "The fetched page explicitly states that a test submission was received by the ops inbox, which satisfies the criterion as written.",
+              "reason": "The fetched page explicitly states that the contact form reaches the ops inbox and that a test submission receipt was received.",
               "status": "PASS"
             }
           ],
-          "summary": "The fetched evidence is directly relevant and sufficient. The submitted HTTPS page content explicitly shows the hero headline 'Ship Faster' and states that form submissions reach the ops inbox with test receipt #42 confirmed."
+          "summary": "The fetched content from the submitted public HTTPS URL directly addresses both criteria: it shows the hero headline 'Ship Faster' and explicitly states that form submissions reach the ops inbox with test receipt #42 confirmed."
         },
-        "tx_adjudicate": "0x1f07ebdf80411ebac1a7c0e92d690e715705c8cccc62cb05300d53c4d5ba2442",
+        "tx_adjudicate": "0xd19c0c7aedbf3f257e64f747f297e0e18ca92421ba498130ed8c71d58a4ffb18",
         "expected": "APPROVED",
         "match": true
       },
       {
         "milestone": "4",
         "verdict": "REJECTED",
-        "secs": 82.1,
+        "secs": 31.6,
         "verdict_full": {
           "decision": "REJECTED",
           "evidence_quality": "HIGH",
@@ -130,15 +130,15 @@
           "rule": "mandatory_fail:c1",
           "statuses": [
             {
-              "evidence": "The fetched HTML page content shows no occurrence of the string \"ZEBRA_7f3a\".",
+              "evidence": "The fetched HTML shows text including \u201cShip Faster\u201d, \u201cQ3 product launch\u201d, \u201cContact form\u201d, and \u201cAnalytics\u201d, but nowhere contains the secret word \u201cZEBRA_7f3a\u201d.",
               "id": "c1",
-              "reason": "Since the page does not mention the required secret word, the mandatory criterion is not satisfied.",
+              "reason": "Criterion c1 requires the page to mention the exact secret word \u201cZEBRA_7f3a\u201d. The fetched page content does not include that string, so the criterion is not satisfied.",
               "status": "FAIL"
             }
           ],
-          "summary": "The provided webpage content was examined and contains no reference to the secret word ZEBRA_7f3a, resulting in a FAIL for the sole acceptance criterion. Evidence is directly from the target page, so its quality is high."
+          "summary": "The evidence is a direct fetch of the submitted public URL, so it is directly relevant. Reviewing the fetched page content shows no occurrence of the required secret word \u201cZEBRA_7f3a\u201d, therefore the only acceptance criterion fails."
         },
-        "tx_adjudicate": "0x602415e051b91192babdb065634125399b319121b0d36f727daf0c80ec9bff26",
+        "tx_adjudicate": "0xfbee025bb6a3c7f47382563c0c2bfcf762b7f6858576df1ab623ff2ea759cf06",
         "expected": "REJECTED",
         "match": true
       }
