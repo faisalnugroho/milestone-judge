@@ -103,12 +103,12 @@ pretending it is impossible.
 | `fund_milestone` | client | status CREATED, value == amount |
 | `cancel_milestone` | client | CREATED/FUNDED, before submission |
 | `mark_expired` | anyone | deadline passed, CREATED/FUNDED only |
-| `submit_evidence` | assigned worker | FUNDED or REJECTED/INSUFFICIENT (rounds < 3), pre-deadline |
+| `submit_evidence` | assigned worker | FUNDED or REJECTED/INSUFFICIENT (rounds < 3), pre-deadline, evidence mandatory (≥ 1 valid URL) |
 | `start_adjudication` | client or worker | status SUBMITTED |
 | `finalize_milestone` | anyone | decided, window closed, no open dispute |
-| `open_dispute` | client or worker | decided, within 3-day window, no prior dispute |
-| `submit_dispute_evidence` | client or worker | dispute OPEN |
-| `resolve_dispute` | client or worker | dispute OPEN |
+| `open_dispute` | client or worker | decided, within 3-day window, no prior dispute; opening evidence optional |
+| `submit_dispute_evidence` | client or worker | dispute OPEN, ≥ 1 valid URL per call, ≤ 20 items total (append-only) |
+| `resolve_dispute` | client or worker | dispute OPEN **and 24h response window elapsed** (enforced on-chain with node time) |
 
 All checks are `gl.vm.UserError` reverts — consensus-visible and
 state-preserving.

@@ -96,15 +96,26 @@ MAX_URL_LEN = 300
 MAX_TEXT_LEN = 2000               # description / statement / requirements
 MAX_DISPUTE_REASON = 1000
 MAX_CONTENT_PER_URL = 5000        # chars of fetched content per URL
-MAX_TOTAL_CONTENT = 20000         # total fetched evidence chars
+MAX_TOTAL_CONTENT = 20000         # total fetched evidence chars (hard cap)
+BASE_EVIDENCE_BUDGET = 14000       # reserved for ORIGINAL/base evidence
+REBUTTAL_EVIDENCE_BUDGET = 6000    # reserved for DISPUTE/rebuttal evidence
 MAX_LLM_FIELD = 300               # per-criterion evidence/reason text cap
 MAX_LLM_SUMMARY = 600             # adjudication summary cap
 MAX_ADJUDICATIONS = 3             # initial + resubmission rounds
+MAX_DISPUTE_EVIDENCE = MAX_EVIDENCE_URLS * 4   # rebuttal items per dispute
 TIMELINE_CAP = 40
-DISPUTE_WINDOW_SECONDS = 3 * 24 * 3600   # 3 days to open a dispute
+DISPUTE_WINDOW_SECONDS = 3 * 24 * 3600        # 3 days to open a dispute
+# Minimum time after a dispute is opened before resolve_dispute() is
+# allowed — the dispute RESPONSE window. Distinct from
+# DISPUTE_WINDOW_SECONDS (time to OPEN a dispute after adjudication).
+DISPUTE_RESPONSE_WINDOW_SECONDS = 24 * 3600   # 24h rebuttal period
 MIN_ESCROW_WEI = 1000000          # dust guard
 MIN_CRITERION_LEN = 5
 MIN_DEADLINE_AHEAD = 3600         # deadline must be >= 1h in the future
+
+# Invariant: the two category budgets are DISJOINT slices of the hard cap,
+# so no allocation can ever exceed MAX_TOTAL_CONTENT.
+assert BASE_EVIDENCE_BUDGET + REBUTTAL_EVIDENCE_BUDGET <= MAX_TOTAL_CONTENT
 
 STATUS_CREATED = "CREATED"
 STATUS_FUNDED = "FUNDED"
@@ -167,11 +178,25 @@ def _clamp(s, n: int) -> str:
     return s[:n]
 
 
-def _parse_evidence(evidence_json: str) -> list:
+EVIDENCE_SOURCE_ORIGINAL = "ORIGINAL"
+EVIDENCE_SOURCE_DISPUTE = "DISPUTE"
+
+
+def _parse_evidence(evidence_json: str, source: str,
+                    allow_empty: bool = False) -> list:
     # Each item: {"url": str, "kind": "GITHUB|WEBSITE|DOCUMENTATION|API|OTHER",
     # "note": str (optional)}
     # Returns a normalized list; raises gl.vm.UserError on any violation.
+    # `source` tags every item (ORIGINAL vs DISPUTE) so the adjudicator and
+    # the fair fetch budget can distinguish base from rebuttal evidence by
+    # METADATA, not array position. `allow_empty=True` is used ONLY by
+    # open_dispute: a dispute may rest on its reason alone, but then the
+    # response window lets BOTH parties add rebuttal evidence before any
+    # resolution, and empty evidence can never become PASS.
     # Validate and normalize a JSON array of evidence items.
+    if not isinstance(source, str) or source not in (
+            EVIDENCE_SOURCE_ORIGINAL, EVIDENCE_SOURCE_DISPUTE):
+        raise gl.vm.UserError("invalid evidence source")
     try:
         items = json.loads(evidence_json)
     except Exception:
@@ -179,6 +204,8 @@ def _parse_evidence(evidence_json: str) -> list:
     if not isinstance(items, list):
         raise gl.vm.UserError("evidence must be a JSON array")
     if len(items) == 0:
+        if allow_empty:
+            return []
         raise gl.vm.UserError("evidence array is empty")
     if len(items) > MAX_EVIDENCE_URLS:
         raise gl.vm.UserError(
@@ -201,8 +228,9 @@ def _parse_evidence(evidence_json: str) -> list:
             "url": url,
             "kind": kind,
             "note": _clamp(it.get("note", ""), MAX_LLM_FIELD),
+            "source": source,
         })
-    if len(out) == 0:
+    if len(out) == 0 and not allow_empty:
         raise gl.vm.UserError("evidence must contain at least one URL")
     return out
 
@@ -335,6 +363,9 @@ PROMPT_HEAD = (
     "  absence as PASS for any criterion it was meant to support.\n"
     "- R5. Output ONLY one JSON object matching the OUTPUT CONTRACT, with\n"
     "  exactly one statuses entry per criterion id, nothing else.\n"
+    "- R6. Missing, empty, or truncated evidence must NEVER become PASS.\n"
+    "  If the fetched content for a criterion is absent or inconclusive,\n"
+    "  mark that criterion INSUFFICIENT_EVIDENCE or FAIL — never PASS.\n"
 )
 
 PROMPT_OUTPUT_CONTRACT = (
@@ -374,8 +405,14 @@ def _build_prompt(title, description, requirements, statement, criteria,
         it = evidence_items[i]
         url, kind, note = it["url"], it["kind"], it.get("note", "")
         body = fetched[i] if i < len(fetched) else ""
-        parts.append("--- EVIDENCE " + str(i + 1) + " [" + kind + "] "
-                     + _clamp(url, MAX_URL_LEN) + "\n")
+        if it.get("source", EVIDENCE_SOURCE_ORIGINAL) \
+                == EVIDENCE_SOURCE_DISPUTE:
+            parts.append("--- EVIDENCE " + str(i + 1)
+                         + " [DISPUTE/REBUTTAL] [" + kind + "] "
+                         + _clamp(url, MAX_URL_LEN) + "\n")
+        else:
+            parts.append("--- EVIDENCE " + str(i + 1) + " [BASE] [" + kind
+                         + "] " + _clamp(url, MAX_URL_LEN) + "\n")
         if note:
             parts.append("worker note (untrusted): " + _clamp(note, MAX_LLM_FIELD) + "\n")
         parts.append("fetched content:\n" + body + "\n")
@@ -389,29 +426,85 @@ def _build_prompt(title, description, requirements, statement, criteria,
 
 
 def _fetch_evidence(evidence_items) -> list:
-    # Per-URL failures become empty bodies (never a crash): the LLM then sees
-    # the URL produced nothing, which maps to INSUFFICIENT_EVIDENCE rather
-    # than a failed transaction. Total content is hard-capped.
-    # Fetch each evidence URL inside the nondet block; bounded content.
-    fetched = []
-    remaining = MAX_TOTAL_CONTENT
-    for it in evidence_items:
-        body = ""
-        if remaining > 0:
-            try:
-                resp = gl.nondet.web.get(it["url"])
-                if resp.body is not None:
-                    raw = resp.body.decode("utf-8", "replace")
-                    take = len(raw)
-                    if take > MAX_CONTENT_PER_URL:
-                        take = MAX_CONTENT_PER_URL
-                    if take > remaining:
-                        take = remaining
-                    body = raw[:take]
-                    remaining -= take
-            except Exception:
-                body = ""
-        fetched.append(body)
+    # FAIR BUDGET FETCH (deterministic, integer-only, single fetch per URL).
+    #
+    # Problem this solves: a sequential first-come-first-served loop lets the
+    # first URLs (base evidence) consume the entire MAX_TOTAL_CONTENT, so
+    # later rebuttal URLs would receive ZERO content purely because of array
+    # order ("evidence-order exhaustion").
+    #
+    # Policy (all integer arithmetic, no floats, same result on every node):
+    #   1. Fetch each URL ONCE, keeping up to MAX_CONTENT_PER_URL raw chars.
+    #   2. Split evidence into two categories by METADATA ("source" field),
+    #      not array position:
+    #        ORIGINAL  -> reserved BASE_EVIDENCE_BUDGET
+    #        DISPUTE   -> reserved REBUTTAL_EVIDENCE_BUDGET
+    #      The budgets are disjoint slices of MAX_TOTAL_CONTENT, so rebuttal
+    #      can never be starved by base evidence and the hard cap holds.
+    #   3. Inside a category: equal share = budget // n per URL, then any
+    #      budget left over by short/failed URLs is redistributed (in index
+    #      order, loop until stable) to same-category URLs that could use
+    #      more — never across categories, never above the per-URL cap.
+    # Every URL therefore receives a deterministic guaranteed minimum
+    # opportunity to contribute content, independent of array ordering.
+    raws = []
+    for i in range(len(evidence_items)):
+        raw = ""
+        try:
+            resp = gl.nondet.web.get(evidence_items[i]["url"])
+            if resp.body is not None:
+                raw = resp.body.decode("utf-8", "replace")
+                if len(raw) > MAX_CONTENT_PER_URL:
+                    raw = raw[:MAX_CONTENT_PER_URL]
+        except Exception:
+            raw = ""
+        raws.append(raw)
+
+    fetched = [""] * len(evidence_items)
+    base_idx = []
+    rebut_idx = []
+    for i in range(len(evidence_items)):
+        if evidence_items[i].get("source", EVIDENCE_SOURCE_ORIGINAL) \
+                == EVIDENCE_SOURCE_DISPUTE:
+            rebut_idx.append(i)
+        else:
+            base_idx.append(i)
+
+    def _allocate(indices, budget) -> None:
+        n = len(indices)
+        if n == 0 or budget <= 0:
+            return
+        alloc = []
+        for _ in range(n):
+            alloc.append(budget // n)      # equal integer share
+        for k in range(n):                 # a short/failed URL frees budget
+            if len(raws[indices[k]]) < alloc[k]:
+                alloc[k] = len(raws[indices[k]])
+        # deterministic in-order redistribution of freed budget
+        changed = True
+        while changed:
+            changed = False
+            total = 0
+            for k in range(n):
+                total += alloc[k]
+            if total >= budget:
+                break
+            for k in range(n):
+                if total >= budget:
+                    break
+                want = len(raws[indices[k]]) - alloc[k]
+                if want > 0:
+                    give = want
+                    if give > budget - total:
+                        give = budget - total
+                    alloc[k] += give
+                    total += give
+                    changed = True
+        for k in range(n):
+            fetched[indices[k]] = raws[indices[k]][:alloc[k]]
+
+    _allocate(base_idx, BASE_EVIDENCE_BUDGET)
+    _allocate(rebut_idx, REBUTTAL_EVIDENCE_BUDGET)
     return fetched
 
 
@@ -445,11 +538,16 @@ class MilestoneJudge(gl.Contract):
         self.next_milestone_id = u256(1)
         self.params = json.dumps({
             "dispute_window_seconds": DISPUTE_WINDOW_SECONDS,
+            "dispute_response_window_seconds":
+                DISPUTE_RESPONSE_WINDOW_SECONDS,
             "max_criteria": MAX_CRITERIA,
             "max_evidence_urls": MAX_EVIDENCE_URLS,
+            "max_dispute_evidence": MAX_DISPUTE_EVIDENCE,
             "max_adjudications": MAX_ADJUDICATIONS,
             "max_evidence_per_url": MAX_CONTENT_PER_URL,
             "max_total_evidence": MAX_TOTAL_CONTENT,
+            "base_evidence_budget": BASE_EVIDENCE_BUDGET,
+            "rebuttal_evidence_budget": REBUTTAL_EVIDENCE_BUDGET,
             "min_deadline_ahead_seconds": MIN_DEADLINE_AHEAD,
             "min_escrow_wei": MIN_ESCROW_WEI,
         })
@@ -755,7 +853,9 @@ class MilestoneJudge(gl.Contract):
         # Allowed: first submission from FUNDED (before deadline), and
         # resubmission after REJECTED / INSUFFICIENT_EVIDENCE while rounds
         # remain. Never after APPROVED, dispute, or settlement.
-        # Worker submits public evidence URLs + a statement.
+        # Worker submits public evidence URLs + a statement. Evidence is
+        # MANDATORY here: at least one valid URL, non-empty array — the
+        # milestone cannot enter adjudication on claims alone.
         mid = str(int(milestone_id))
         rec = self._load(mid)
         if self._sender() != rec["worker"]:
@@ -779,7 +879,7 @@ class MilestoneJudge(gl.Contract):
                 "statement must explain the evidence (min 10 chars)")
         if len(statement) > MAX_TEXT_LEN:
             raise gl.vm.UserError("statement too long")
-        items = _parse_evidence(evidence_json)
+        items = _parse_evidence(evidence_json, EVIDENCE_SOURCE_ORIGINAL)
 
         ev = rec.get("evidence", [])
         for it in items:
@@ -789,6 +889,7 @@ class MilestoneJudge(gl.Contract):
                 "note": it["note"],
                 "at": str(now),
                 "actor": self._sender(),
+                "source": EVIDENCE_SOURCE_ORIGINAL,
             })
         rec["evidence"] = ev
         rec["worker_statement"] = statement
@@ -832,7 +933,9 @@ class MilestoneJudge(gl.Contract):
         for u in client_urls:
             if _url_ok(u):
                 evidence_items = evidence_items + [
-                    {"url": u, "kind": "OTHER", "note": "client-provided"}]
+                    {"url": u, "kind": "OTHER",
+                     "note": "client-provided",
+                     "source": EVIDENCE_SOURCE_ORIGINAL}]
         if len(evidence_items) == 0:
             raise gl.vm.UserError("no evidence to adjudicate")
         title = rec["title"]
@@ -904,6 +1007,8 @@ class MilestoneJudge(gl.Contract):
             fetch_report.append({
                 "url": evidence_items[i]["url"],
                 "kind": evidence_items[i]["kind"],
+                "source": evidence_items[i].get(
+                    "source", EVIDENCE_SOURCE_ORIGINAL),
             })
 
         snapshot = {
@@ -978,6 +1083,19 @@ class MilestoneJudge(gl.Contract):
         # protocol-level Optimistic Democracy appeals. One dispute per
         # milestone; it does NOT overwrite the original decision, which is
         # preserved in the adjudication history.
+        #
+        # EVIDENCE POLICY (explicit): opening evidence is OPTIONAL — a
+        # dispute may rest on its reason alone ("[]" accepted). This is safe
+        # because:
+        #   - the original milestone evidence always exists (submit_evidence
+        #     requires >= 1 URL before adjudication can ever run), so the
+        #     dispute round always has real evidence to evaluate;
+        #   - empty dispute evidence cannot become PASS: R4/R6 of the
+        #     adjudication rules + INSUFFICIENT_EVIDENCE routing guarantee
+        #     that missing evidence blocks approval, never grants it;
+        #   - the 24h RESPONSE WINDOW (dispute["response_deadline"]) blocks
+        #     resolve_dispute until both parties had a chance to add
+        #     rebuttal evidence via submit_dispute_evidence.
         # A party disputes the decision within the dispute window.
         mid = str(int(milestone_id))
         rec = self._load(mid)
@@ -995,7 +1113,8 @@ class MilestoneJudge(gl.Contract):
                 "dispute reason must be at least 10 chars")
         if len(reason) > MAX_DISPUTE_REASON:
             raise gl.vm.UserError("dispute reason too long")
-        items = _parse_evidence(evidence_json)
+        items = _parse_evidence(evidence_json, EVIDENCE_SOURCE_DISPUTE,
+                               allow_empty=True)
         now = self._now()
         dispute = {
             "milestone_id": mid,
@@ -1005,6 +1124,8 @@ class MilestoneJudge(gl.Contract):
             "original_decision": rec["verdict"].get("decision", ""),
             "original_round": rec["verdict"].get("round", 0),
             "opened_at": str(now),
+            "response_deadline": str(now
+                                     + DISPUTE_RESPONSE_WINDOW_SECONDS),
             "status": "OPEN",
             "resolution": {},
         }
@@ -1013,12 +1134,18 @@ class MilestoneJudge(gl.Contract):
         self._append_timeline(rec, "dispute_opened")
         self._put(mid, rec)
         DisputeOpenedEvent(u256(int(mid)), by=self._sender(),
-                           against=dispute["original_decision"]).emit()
+                           against=dispute["original_decision"],
+                           response_deadline=now
+                           + DISPUTE_RESPONSE_WINDOW_SECONDS).emit()
 
     @gl.public.write
     def submit_dispute_evidence(self, milestone_id: u256,
                                 evidence_json: str) -> None:
-# Either party may add evidence while the dispute is OPEN.
+        # Either party may add REBUTTAL evidence while the dispute is OPEN
+        # and the response window is running: the opener may add more, and
+        # the OTHER party can answer. Evidence items are appended — never
+        # overwritten — and each carries its actor + timestamp + DISPUTE
+        # source tag (feeding the reserved rebuttal fetch budget).
         mid = str(int(milestone_id))
         rec = self._load(mid)
         if rec["status"] != STATUS_DISPUTED:
@@ -1027,8 +1154,13 @@ class MilestoneJudge(gl.Contract):
         dispute = json.loads(self.disputes[mid])
         if dispute["status"] != "OPEN":
             raise gl.vm.UserError("dispute is not open")
-        items = _parse_evidence(evidence_json)
+        items = _parse_evidence(evidence_json, EVIDENCE_SOURCE_DISPUTE)
+        if len(items) == 0:
+            raise gl.vm.UserError(
+                "rebuttal evidence must contain at least one valid URL")
         ev = dispute.get("evidence", [])
+        if len(ev) + len(items) > MAX_DISPUTE_EVIDENCE:
+            raise gl.vm.UserError("dispute evidence limit reached")
         for it in items:
             ev.append({
                 "url": it["url"],
@@ -1036,9 +1168,8 @@ class MilestoneJudge(gl.Contract):
                 "note": it["note"],
                 "at": str(self._now()),
                 "actor": self._sender(),
+                "source": EVIDENCE_SOURCE_DISPUTE,
             })
-        if len(ev) > MAX_EVIDENCE_URLS * 4:
-            raise gl.vm.UserError("dispute evidence limit reached")
         dispute["evidence"] = ev
         self._put_dispute(mid, dispute)
         self._append_timeline(rec, "dispute_evidence_added")
@@ -1047,6 +1178,13 @@ class MilestoneJudge(gl.Contract):
     @gl.public.write
     def resolve_dispute(self, milestone_id: u256) -> str:
         # Re-adjudicate under consensus with the dispute context, then
+        # settle deterministically — but ONLY after the RESPONSE WINDOW.
+        #
+        # ON-CHAIN WINDOW ENFORCEMENT (the steward-required fix): a dispute
+        # cannot be resolved until response_deadline has passed, giving both
+        # parties a guaranteed 24h window to add rebuttal evidence. This is
+        # enforced by contract code using node-assigned time — frontend
+        # disabling alone is not sufficient and is not relied upon.
         mid = str(int(milestone_id))
         rec = self._load(mid)
         if rec["status"] != STATUS_DISPUTED:
@@ -1055,10 +1193,14 @@ class MilestoneJudge(gl.Contract):
         dispute = json.loads(self.disputes[mid])
         if dispute["status"] != "OPEN":
             raise gl.vm.UserError("dispute is not open")
+        if self._now() < int(dispute["response_deadline"]):
+            raise gl.vm.UserError("dispute response window is still open")
 
         # Build the dispute context from the dispute record (memory copy).
         # Dispute evidence is temporarily merged into the evidence list the
-        # engine fetches, so validators fetch the same sources.
+        # engine fetches, so validators fetch the same sources. Each item
+        # carries its source tag so the fair fetch budget reserves capacity
+        # for the rebuttal category.
         original_evidence = rec.get("evidence", [])
         dispute_evidence = dispute.get("evidence", [])
         rec["evidence"] = original_evidence + dispute_evidence

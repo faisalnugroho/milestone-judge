@@ -1,13 +1,20 @@
 # Deployment
 
-## Live deployment (2026-09-02, Studionet)
+## Live deployment (2026-09-03, Studionet — dispute-hardening resubmission)
 
 | Item | Value |
 |---|---|
-| Contract | `0x7C6e515187c47202c7330384613229F75B180814` |
-| Explorer | https://explorer-studio.genlayer.com/address/0x7C6e515187c47202c7330384613229F75B180814 |
+| Contract | `0xc052de2633cf11BaC85Fa915264D7189A8c60482` |
+| Explorer | https://explorer-studio.genlayer.com/address/0xc052de2633cf11BaC85Fa915264D7189A8c60482 |
 | Frontend | https://milestone-judge.vercel.app |
-| Smoke protocol | 6/6 PASS — full log in `docs/deployment_log.json` |
+| Smoke protocol | see `docs/deployment_log.json` (updated by each run) |
+
+The 2026-09-03 redeploy carries the steward-requested dispute hardening
+(blank-evidence policy, both-party rebuttal evidence, 24h on-chain
+response window, fair 14000/6000 fetch budget split). The previous
+contract (`0x7C6e515187c47202c7330384613229F75B180814`, deployed
+2026-09-02, 6/6 smoke PASS) remains on-chain for audit but is
+superseded — the frontend now targets the new address.
 
 Smoke results (all with FULL consensus, real validators, real LLM):
 
@@ -32,7 +39,7 @@ Smoke results (all with FULL consensus, real validators, real LLM):
 
 ```bash
 GENVMROOT=/tmp/genvmroot genvm-lint check contracts/milestone_judge.py
-.venv/bin/python -m pytest tests/test_milestone_judge.py -v   # 69 passed
+.venv/bin/python -m pytest tests/direct/ -v   # 95 passed
 ```
 
 ## Step 2 — deploy the contract

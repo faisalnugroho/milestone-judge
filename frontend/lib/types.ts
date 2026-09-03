@@ -48,6 +48,8 @@ export interface EvidenceItem {
   note: string;
   at: string;
   actor: string;
+  /** ORIGINAL = worker base evidence; DISPUTE = dispute/rebuttal round */
+  source?: "ORIGINAL" | "DISPUTE" | string;
 }
 
 export interface Verdict {
@@ -101,7 +103,11 @@ export interface AdjudicationSnapshot {
   evidence_quality: EvidenceQuality | string;
   summary: string;
   statuses: { id: string; status: CriterionStatus; evidence: string; reason: string }[];
-  evidence_refs: { url: string; kind: string }[];
+  evidence_refs: {
+    url: string;
+    kind: string;
+    source?: "ORIGINAL" | "DISPUTE" | string;
+  }[];
 }
 
 export interface DisputeRecord {
@@ -112,6 +118,8 @@ export interface DisputeRecord {
   original_decision: string;
   original_round: number;
   opened_at: string;
+  /** epoch seconds — resolve_dispute is blocked on-chain until this */
+  response_deadline: string;
   status: "OPEN" | "RESOLVED" | string;
   resolution: { decision?: string; at?: string; round?: number };
 }

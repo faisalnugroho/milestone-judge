@@ -96,6 +96,13 @@ export default function MilestoneDetailPage() {
     ["APPROVED", "REJECTED", "INSUFFICIENT_EVIDENCE"].includes(m.status) &&
     !dispute &&
     Number(m.dispute_deadline) > nowSec;
+  // 24h on-chain response window: resolve_dispute reverts before it ends,
+  // rebuttal evidence can be added by BOTH parties any time the dispute is OPEN.
+  const responseWindowOpen =
+    m &&
+    m.status === "DISPUTED" &&
+    dispute?.status === "OPEN" &&
+    Number(dispute.response_deadline) > nowSec;
   const canFinalize =
     m &&
     ["APPROVED", "REJECTED", "INSUFFICIENT_EVIDENCE"].includes(m.status) &&
@@ -109,6 +116,9 @@ export default function MilestoneDetailPage() {
   const [statement, setStatement] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeUrl, setDisputeUrl] = useState("");
+  const [rebuttalUrl, setRebuttalUrl] = useState("");
+  const [rebuttalKind, setRebuttalKind] = useState<string>("WEBSITE");
+  const [rebuttalNote, setRebuttalNote] = useState("");
 
   async function run(fn: (c: NonNullable<typeof write>) => Promise<unknown>) {
     if (!write) return;
@@ -414,21 +424,75 @@ export default function MilestoneDetailPage() {
           <p className="mt-3 text-sm leading-relaxed text-ink-300">
             {dispute.reason}
           </p>
+
+          {/* dispute evidence with per-item provenance */}
           {dispute.evidence.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 space-y-2">
+              <SectionLabel>Dispute / rebuttal evidence</SectionLabel>
               {dispute.evidence.map((e, i) => (
-                <a
+                <div
                   key={i}
-                  href={e.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full bg-black/[0.04] px-3 py-1.5 font-mono text-[11px] text-ink-300 transition-colors hover:bg-black/[0.08]"
+                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-[12px] bg-black/[0.03] px-4 py-2.5"
                 >
-                  [{e.kind}] {e.url.slice(0, 48)}…
-                </a>
+                  <span className="rounded-full bg-verdict-400/10 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-verdict-600">
+                    {e.source === "DISPUTE" ? "rebuttal" : (e.source ?? "evidence")}
+                  </span>
+                  <a
+                    href={e.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-[11px] text-ink-300 underline decoration-black/20 underline-offset-2 transition-colors hover:text-verdict-600"
+                  >
+                    {e.url.length > 56 ? `${e.url.slice(0, 56)}…` : e.url}
+                  </a>
+                  <span className="text-[11px] text-ink-400">
+                    by {shortAddress(e.actor, 4)}
+                    {e.actor.toLowerCase() === m.client.toLowerCase()
+                      ? " (client)"
+                      : e.actor.toLowerCase() === m.worker.toLowerCase()
+                        ? " (worker)"
+                        : ""}{" "}
+                    · {formatEpoch(e.at)}
+                  </span>
+                  {e.note && (
+                    <span className="w-full text-[11px] text-ink-400">
+                      note: {e.note}
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
           )}
+
+          {/* response window countdown */}
+          {dispute.status === "OPEN" && (
+            <div
+              className={`mt-4 rounded-[12px] px-4 py-3 ${
+                responseWindowOpen
+                  ? "bg-verdict-400/[0.06]"
+                  : "bg-black/[0.03]"
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-xs font-medium text-ink-50">
+                  Response window
+                </span>
+                {responseWindowOpen ? (
+                  <span className="text-xs text-verdict-600">
+                    open for {timeLeft(dispute.response_deadline)} — both
+                    parties may add rebuttal evidence; resolution is
+                    blocked on-chain until it closes.
+                  </span>
+                ) : (
+                  <span className="text-xs text-ink-400">
+                    closed {formatEpoch(dispute.response_deadline)} — the
+                    dispute can now be resolved by a fresh consensus round.
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {dispute.status === "RESOLVED" && dispute.resolution.decision && (
             <div className="mt-4 rounded-[12px] bg-black/[0.03] px-4 py-3">
               <div className="flex items-center gap-2.5">
@@ -630,18 +694,95 @@ export default function MilestoneDetailPage() {
 
         {dispute && dispute.status === "OPEN" && role && (
           <div className="space-y-3 border-t border-black/[0.08] pt-5">
-            <SectionLabel>Resolve dispute</SectionLabel>
+            <SectionLabel>
+              {responseWindowOpen
+                ? "Add rebuttal evidence"
+                : "Add more dispute evidence"}
+            </SectionLabel>
             <p className="text-sm text-ink-300">
-              Re-adjudicates ALL evidence (original + dispute) under a fresh
-              consensus round, then settles the escrow per the new verdict.
+              {responseWindowOpen
+                ? "The 24h response window is open — both the client and the worker can submit rebuttal URLs. The contract will re-adjudicate ALL evidence (original + dispute) with a fair, reserved fetch budget for rebuttal items."
+                : "The response window has closed, but evidence can still be appended before the dispute is resolved."}
             </p>
+            <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+              <input
+                className={`${inputCls} font-mono text-sm`}
+                placeholder="https://rebuttal-evidence.example.com"
+                value={rebuttalUrl}
+                onChange={(e) => setRebuttalUrl(e.target.value)}
+              />
+              <select
+                className={inputCls}
+                value={rebuttalKind}
+                onChange={(e) => setRebuttalKind(e.target.value)}
+              >
+                {KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <input
+              className={inputCls}
+              placeholder="Note for this rebuttal (optional)"
+              value={rebuttalNote}
+              onChange={(e) => setRebuttalNote(e.target.value)}
+            />
             <button
               className={btnCls}
-              disabled={!write || tx.phase !== "idle"}
-              onClick={() => run((c) => c.resolveDispute(m.id, setTx))}
+              disabled={
+                !write ||
+                tx.phase !== "idle" ||
+                !/^https?:\/\//.test(rebuttalUrl.trim())
+              }
+              onClick={() => {
+                const evidenceJson = JSON.stringify([
+                  {
+                    url: rebuttalUrl.trim(),
+                    kind: rebuttalKind,
+                    note: rebuttalNote.trim(),
+                  },
+                ]);
+                setRebuttalUrl("");
+                setRebuttalNote("");
+                run((c) =>
+                  c.submitDisputeEvidence(m.id, evidenceJson, setTx)
+                );
+              }}
             >
-              Trigger dispute resolution
+              Submit rebuttal evidence
             </button>
+          </div>
+        )}
+
+        {dispute && dispute.status === "OPEN" && role && (
+          <div className="space-y-3 border-t border-black/[0.08] pt-5">
+            <SectionLabel>Resolve dispute</SectionLabel>
+            {responseWindowOpen ? (
+              <p className="text-sm text-ink-400">
+                Resolution is blocked on-chain until the response window
+                closes ({formatEpoch(dispute.response_deadline)},{" "}
+                {timeLeft(dispute.response_deadline)} left). This gives both
+                parties time to add rebuttal evidence before the fresh
+                consensus round runs.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-ink-300">
+                  The response window has closed. Re-adjudicates ALL
+                  evidence (original + dispute) under a fresh consensus
+                  round, then settles the escrow per the new verdict.
+                </p>
+                <button
+                  className={btnCls}
+                  disabled={!write || tx.phase !== "idle"}
+                  onClick={() => run((c) => c.resolveDispute(m.id, setTx))}
+                >
+                  Trigger dispute resolution
+                </button>
+              </>
+            )}
           </div>
         )}
 

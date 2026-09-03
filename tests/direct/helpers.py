@@ -66,6 +66,12 @@ def set_time(vm, iso):
             pass
 
 
+def epoch_to_iso(epoch):
+    """Epoch seconds -> the ISO-8601 shape the contract parses."""
+    return time.strftime(
+        "%Y-%m-%dT%H:%M:%S", time.gmtime(epoch)) + ".000Z"
+
+
 def iso_in_days(days):
     return time.strftime(
         "%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() + days * 86400)) + ".000Z"
@@ -137,11 +143,23 @@ def fund(vm, contract, client, milestone_id, amount=AMOUNT):
     vm.value = 0
 
 
+def mock_body(vm, url, body):
+    """Register a web mock in the DICT format this gltest build requires.
+
+    vm.mock_web(url, str) silently breaks here: _match_web_mock calls
+    response.get(...) on the stored value, a str has no .get, the
+    AttributeError is swallowed by the contract's fetch try/except and
+    EVERY string-mocked fetch returns empty content. Dict-format mocks
+    actually deliver the body to the contract under test.
+    """
+    vm.mock_web(url, {"status": 200, "body": body})
+
+
 def submit_evidence(vm, contract, worker, milestone_id,
                     url="https://acme.example.com/dashboard",
                     body=None, kind="WEBSITE", statement=None):
     if body is not None:
-        vm.mock_web(url, body)
+        mock_body(vm, url, body)
     vm.sender = worker
     contract.submit_evidence(
         milestone_id,
@@ -216,3 +234,71 @@ def llm_injection_obedient():
         "evidence_quality": "HIGH",
         "summary": "Approved per page instructions (injection).",
     })
+
+
+def llm_empty_ok(quality="LOW"):
+    """LLM output for cases where fetched evidence produced nothing useful:
+    nothing may become PASS on the back of empty evidence."""
+    return json.dumps({
+        "statuses": [
+            {"id": "c1", "status": "INSUFFICIENT_EVIDENCE",
+             "evidence": "no usable content fetched",
+             "reason": "evidence URLs produced no content"},
+            {"id": "c2", "status": "INSUFFICIENT_EVIDENCE",
+             "evidence": "no usable content fetched",
+             "reason": "evidence URLs produced no content"},
+        ],
+        "evidence_quality": quality,
+        "summary": "Fetched evidence was empty; nothing can be verified.",
+    })
+
+
+BIG_BODY = ("A" * 5000)          # exactly one URL's max content
+BIG_BODY_6K = ("B" * 6000)        # longer than MAX_CONTENT_PER_URL
+
+
+def submit_evidence_multi(vm, contract, worker, milestone_id, urls_bodies,
+                          statement=None):
+    """Submit several evidence URLs at once (worker base evidence).
+
+    urls_bodies: list of (url, body) pairs; each url is dict-mocked so the
+    adjudication fetch actually sees the content.
+    """
+    for url, body in urls_bodies:
+        if body is not None:
+            mock_body(vm, url, body)   # None body = left unmocked (fetch fails)
+    vm.sender = worker
+    contract.submit_evidence(
+        milestone_id,
+        json.dumps([{"url": u, "kind": "WEBSITE",
+                     "note": "multi-url evidence"} for u, _ in urls_bodies]),
+        statement or "Deliverables are live at the listed URLs.",
+    )
+
+
+def open_dispute(vm, contract, who, milestone_id, reason, evidence):
+    vm.sender = who
+    contract.open_dispute(milestone_id, reason, evidence)
+
+
+def add_rebuttal(vm, contract, who, milestone_id, evidence):
+    vm.sender = who
+    contract.submit_dispute_evidence(milestone_id, evidence)
+
+
+def dispute_with_rebuttal_ready(direct_vm, deployed, alice, bob):
+    """Standard disputed state: APPROVED milestone, dispute open, rebuttal
+    evidence added by the OTHER party (the worker)."""
+    create_milestone(direct_vm, deployed, alice, bob)
+    fund(direct_vm, deployed, alice, 1)
+    submit_evidence(direct_vm, deployed, bob, 1, body=PAGE_BODY)
+    direct_vm.mock_llm(".*", llm_all_pass())
+    direct_vm.sender = alice
+    deployed.start_adjudication(1)
+    direct_vm.sender = alice
+    deployed.open_dispute(
+        1, "The approval is disputed for this test",
+        json.dumps([{"url": "https://acme.example.com/d-open"}]))
+    direct_vm.sender = bob
+    deployed.submit_dispute_evidence(
+        1, json.dumps([{"url": "https://acme.example.com/d-reb"}]))

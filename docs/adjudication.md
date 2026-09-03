@@ -142,20 +142,47 @@ original decision, the dispute reason, nor either party.
 - `gl.nondet.web.get` fetches run only inside the nondet block; per-URL
   failures are caught and become empty bodies → the affected criteria
   resolve to `INSUFFICIENT_EVIDENCE` instead of crashing the transaction.
-- Content is bounded: `MAX_CONTENT_PER_URL = 5000` chars,
-  `MAX_TOTAL_CONTENT = 20000` chars across all URLs.
+- Content is bounded by a **fair, category-based budget**:
+  `MAX_CONTENT_PER_URL = 5000` chars, and the `MAX_TOTAL_CONTENT = 20000`
+  hard cap is split into two disjoint reserved slices —
+  `BASE_EVIDENCE_BUDGET = 14000` for ORIGINAL (worker + client) evidence
+  and `REBUTTAL_EVIDENCE_BUDGET = 6000` for DISPUTE-round evidence.
+- Allocation is deterministic integer math: every URL in a category gets
+  an equal share (`budget // n`), and budget freed by short or failed URLs
+  is redistributed **within the same category only** — never across
+  categories, never above the per-URL cap. Rebuttal evidence therefore
+  can never be starved by base evidence regardless of array order (the
+  sequential first-come-first-served starvation bug is structurally
+  impossible), and the 20000-char hard cap always holds.
 - Client-provided reference URLs (spec documents etc.) are merged into the
-  adjudication fetch set and recorded in the snapshot's `evidence_refs`.
+  adjudication fetch set and recorded in the snapshot's `evidence_refs`
+  (each ref carries its `source` tag: ORIGINAL or DISPUTE).
 
 ## Dispute rounds
 
 `open_dispute` (either party, 3-day window, once per milestone) stores the
-original decision and does **not** overwrite it. `resolve_dispute` runs a
-fresh consensus round over **all** evidence (original + dispute evidence)
-with the dispute context, derives a new decision through the same
-deterministic rules, and settles the escrow accordingly. The complete
-adjudication history — every round, every trigger, every per-criterion
-status — stays on-chain (`get_adjudications`).
+original decision and does **not** overwrite it. Opening evidence is
+optional — a dispute may rest on its reason alone; empty evidence can
+never become PASS (prompt rules R4/R6 + the INSUFFICIENT_EVIDENCE routing
+guarantee missing evidence blocks approval, never grants it), and the
+original milestone evidence always exists to re-evaluate because
+`submit_evidence` requires at least one valid URL before any
+adjudication can run.
+
+While the dispute is OPEN, **both parties** can append rebuttal evidence
+via `submit_dispute_evidence` (append-only, per-item actor + timestamp +
+DISPUTE source tag, capped at 20 items).
+
+`resolve_dispute` is **blocked on-chain until a 24-hour response window**
+(`response_deadline`, enforced with node-assigned time inside the
+contract) has passed since the dispute was opened — neither party can
+shortcut it, and frontend gating is not relied upon. After the window,
+`resolve_dispute` runs a fresh consensus round over **all** evidence
+(original + dispute evidence, each tagged with its category for the fair
+fetch budget) with the dispute context, derives a new decision through
+the same deterministic rules, and settles the escrow accordingly. The
+complete adjudication history — every round, every trigger, every
+per-criterion status — stays on-chain (`get_adjudications`).
 
 ## GenLayer positioning (why this needs GenLayer)
 

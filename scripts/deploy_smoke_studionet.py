@@ -7,10 +7,11 @@ Protocol (per docs/deployment.md):
      must REPEAT across consecutive consensus rounds (determinism)
   3. one negative case — evidence that fails a criterion must flip the
      verdict to REJECTED
-  4. dispute an APPROVED milestone inside the window: a second consensus
-     round that ends APPROVED RELEASES the escrow live (real emit_transfer
-     value movement), and the finalize crank is proven to be window-locked
-  5. everything logged to docs/deployment_log.json as submission evidence
+  4. dispute an APPROVED milestone: the other party adds rebuttal
+     evidence, then an IMMEDIATE resolve_dispute is refused by the 24h
+     on-chain response window and the escrow stays locked (steward fix)
+  5. finalize crank proven window-locked (3-day dispute window)
+  6. everything logged to docs/deployment_log.json as submission evidence
 
 Roles (distinct accounts, gitignored keyfiles):
   scripts/smoke_deployer.json  {"private_key": "0x..."}   client/deployer
@@ -220,49 +221,68 @@ def main() -> int:
     results.append(neg)
 
     # ---- dispute round on an APPROVED milestone -----------------------
-    # open_dispute/resolve_dispute run INSIDE the 3-day window, and an
-    # APPROVED dispute resolution RELEASES the escrow live (emit_transfer),
-    # which also proves real value movement without waiting 3 days.
+    # NEW dispute-hardening protocol (2026-09-03): open_dispute → the OTHER
+    # party (worker) adds rebuttal evidence → immediate resolve_dispute MUST
+    # be refused by the 24h on-chain response window (steward fix #3) →
+    # escrow stays DISPUTED/locked. The 3-day dispute window still blocks
+    # finalize, so the locked state is doubly proven.
     dispute = None
     if det_ok:
         mid_d = results[1]["milestone"]
-        tx = client.write_contract(
+        tx_open = client.write_contract(
             address=addr, function_name="open_dispute",
             args=[mid_d,
                   "The client disputes this approval: the contact form "
                   "receipt claim needs re-verification against the page.",
                   ev_json(EVIDENCE_URL)],
             account=client_acc)
-        wait_final(client, tx, "open_dispute")
-        tx = client.write_contract(
+        wait_final(client, tx_open, "open_dispute")
+        # other party adds rebuttal evidence during the response window
+        tx_reb = client.write_contract(
+            address=addr, function_name="submit_dispute_evidence",
+            args=[mid_d, ev_json(EVIDENCE_URL)],
+            account=worker_acc)
+        wait_final(client, tx_reb, "rebuttal_evidence")
+        # immediate resolution MUST be refused (response window open)
+        tx_res = client.write_contract(
             address=addr, function_name="resolve_dispute", args=[mid_d],
             account=client_acc)
-        wait_final(client, tx, "resolve_dispute")
+        r_res = wait_final(client, tx_res, "resolve-early-refused",
+                           expect_error=True)
+        leader = (r_res.get("consensus_data") or {}).get("leader_receipt",
+                                                         [{}])
+        payload = str(((leader[0] or {}).get("result") or {}).get("payload")
+                      or "")
+        refused = "response window" in payload
         rec = read_rec(client, addr, mid_d)
         dis = json.loads(client.read_contract(
             address=addr, function_name="get_dispute", args=[mid_d]))
-        history = json.loads(client.read_contract(
-            address=addr, function_name="get_adjudications",
-            args=[mid_d]))
-        bal_after = client.get_balance(addr)
+        contract_balance = client.get_balance(addr)
         dispute = {
             "milestone": mid_d,
             "original_decision": dis.get("original_decision"),
-            "final_decision": dis.get("resolution", {}).get("decision"),
-            "rounds": len(history),
-            "status": rec["status"],
-            "contract_balance_after": str(bal_after),
-            "tx_resolve": tx,
+            "dispute_status": dis.get("status"),
+            "rebuttal_evidence_items": len(dis.get("evidence", [])),
+            "rebuttal_actor": (dis.get("evidence") or [{}])[-1].get("actor")
+                if dis.get("evidence") else None,
+            "early_resolution_refused": refused,
+            "refusal_payload": payload[:100],
+            "milestone_status_after": rec["status"],
+            "escrow_locked": rec["status"] == "DISPUTED",
+            "response_deadline": dis.get("response_deadline"),
+            "contract_balance_locked_wei": str(contract_balance),
+            "tx_open": tx_open,
+            "tx_rebuttal": tx_reb,
+            "tx_resolve_refused": tx_res,
         }
-        dispute["ok"] = (dis.get("status") == "RESOLVED"
-                         and dis.get("resolution", {}).get("decision")
-                         == "APPROVED"
-                         and rec["status"] == "RELEASED"
-                         and len(history) >= 2)
-        print(f"dispute: original={dispute['original_decision']} "
-              f"final={dispute['final_decision']} rounds={dispute['rounds']} "
-              f"status={rec['status']} balance_after={bal_after}",
-              flush=True)
+        dispute["ok"] = (refused
+                         and dis.get("status") == "OPEN"
+                         and rec["status"] == "DISPUTED"
+                         and dispute["rebuttal_evidence_items"] >= 1)
+        print(f"dispute: early-resolve refused={refused} "
+              f"status={rec['status']} rebuttals="
+              f"{dispute['rebuttal_evidence_items']} "
+              f"escrow_locked={dispute['escrow_locked']}", flush=True)
 
     # ---- finalize window enforcement (live negative check) ------------
     # 3-day window means finalize MUST refuse right now. UserError arrives
@@ -305,7 +325,7 @@ def main() -> int:
     LOG_PATH.write_text(json.dumps(log, indent=2))
     print(f"DETERMINISM_CONSISTENT: {det_ok}  NEGATIVE_REJECTED: {neg_ok}")
     if dispute:
-        print(f"DISPUTE_RELEASED: {dispute['ok']}")
+        print(f"DISPUTE_WINDOW_ENFORCED: {dispute['ok']}")
     if window:
         print(f"FINALIZE_WINDOW_ENFORCED: {window['ok']}")
     print("ALL_SMOKE_PASS:", all_ok)

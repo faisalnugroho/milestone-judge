@@ -21,14 +21,14 @@ GENVMROOT=/tmp/genvmroot genvm-lint check contracts/milestone_judge.py
 # (expected: ✓ Lint passed (3 checks) / ✓ Validation passed)
 
 # 3. Direct-mode tests
-.venv/bin/python -m pytest tests/test_milestone_judge.py -v
-# (expected: 69 passed)
+.venv/bin/python -m pytest tests/direct/ -v
+# (expected: 95 passed — 69 core + 26 dispute-hardening)
 ```
 
 Note: `genvm-lint` ships inside the `genlayer` pip distribution; any
 environment that has it works (`pip show genlayer`).
 
-## What the 69 tests cover
+## What the 95 tests cover
 
 **Creation (8)** — full record fields; rejects short titles, invalid/empty
 criteria JSON, past deadlines, worker==client, dust amounts, duplicate
@@ -75,6 +75,36 @@ milestone; undecided milestone cannot be disputed; dispute blocks
 finalization; the worker can dispute a rejection; resolve requires an open
 dispute.
 
+**Dispute hardening (26, `tests/direct/test_dispute_hardening.py`)** — the
+steward-requested regressions:
+
+- *Immediate resolution blocked (3)*: `resolve_dispute` reverts inside the
+  24h response window (escrow locked, no transfer, both parties blocked);
+  after the window it resolves and settles; boundary tests at deadline-1s
+  (rejected), exactly at deadline (allowed), deadline+1s (allowed).
+- *Empty evidence policy (6)*: `submit_evidence([])` reverts (milestone
+  evidence is mandatory); `open_dispute("[]")` is accepted (reason-alone
+  policy) and never yields APPROVED; invalid dispute URLs rejected;
+  `submit_dispute_evidence([])` reverts (rebuttal needs >= 1 URL);
+  unfetchable evidence → INSUFFICIENT_EVIDENCE with escrow protected; a
+  dispute round over empty/unfetchable evidence refunds, never releases.
+- *Rebuttal access (6)*: the opener can add more; the OTHER party can add
+  rebuttal (actor/source/timestamp recorded per item); evidence is
+  append-only, never overwritten; strangers rejected; the 20-item
+  dispute-evidence cap enforced; the original adjudication entry is
+  immutable across the dispute round.
+- *Fair fetch budget (6)*: the allocator's math verified locally (equal
+  integer shares, in-order redistribution, disjoint 14000/6000 budgets,
+  20000 hard cap); live-path tests spy the real LLM prompt and measure
+  per-URL content — rebuttal URLs keep their reserved 3000-char share
+  even when 4×5000-char base URLs would exhaust a sequential budget
+  (total exactly 20000); big-body cap test; allocation independent of
+  dispute-evidence array order; a failed base URL frees budget within its
+  own category without touching the rebuttal budget.
+- *Window interplay (2)*: the 3-day opening window is unchanged and
+  separate from the 24h response window; `response_deadline` +
+  `get_params()` expose both budgets and windows for UIs.
+
 **Invariants (5)** — `get_stats` locked-wei tracking; adjudication rounds
 capped at 3; end-to-end value conservation (exactly one party ends with
 the escrow, contract keeps nothing, stats locked returns to zero);
@@ -85,9 +115,14 @@ id listing; not-found views return well-formed error JSON.
 - **Fixtures**: `direct_vm`, `direct_deploy`, `direct_alice` (client),
   `direct_bob` (worker), `direct_charlie` (stranger) from
   `gltest.direct.pytest_plugin`.
-- **Web/LLM mocks**: `vm.mock_web(url, body)` / `vm.mock_llm(".*", json)`;
-  first-match-wins, so tests call `vm.clear_mocks()` before re-registering
-  (visible in the resubmission tests).
+- **Web/LLM mocks**: `H.mock_body(vm, url, body)` (dict-format
+  `{"status": 200, "body": …}`) / `vm.mock_llm(".*", json)`; first-match
+  wins, so tests call `vm.clear_mocks()` before re-registering (visible
+  in the resubmission tests). **Pitfall**: passing a bare string body to
+  `vm.mock_web` silently breaks in this gltest build — `_match_web_mock`
+  calls `response.get(...)` on the stored value, the `AttributeError` is
+  swallowed by the contract's fetch `try/except`, and every fetch returns
+  empty content. Always use `mock_body` / the dict format.
 - **Time control**: `set_time()` warps the VM *and* patches the loaded
   contract's `gl.message_raw["datetime"]` (gltest's `vm.warp` alone does
   not propagate — a documented pitfall) so deadline/dispute-window tests

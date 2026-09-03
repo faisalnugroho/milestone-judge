@@ -722,11 +722,17 @@ class TestDispute:
         d = json.loads(deployed.get_dispute(1))
         assert d["status"] == "OPEN"
         assert d["original_decision"] == "APPROVED"
-        # the OTHER party adds dispute evidence
+        # the OTHER party adds dispute evidence (during the response window)
         direct_vm.sender = bob
         deployed.submit_dispute_evidence(
             1, json.dumps([{"url": "https://acme.example.com/dashboard2",
                             "kind": "WEBSITE"}]))
+        d = json.loads(deployed.get_dispute(1))
+        assert len(d["evidence"]) == 2
+        assert d["evidence"][1]["actor"] == addr_str(bob)
+        assert d["evidence"][1]["source"] == "DISPUTE"
+        # past the 24h response window, still inside the 3-day window
+        H.set_time(direct_vm, H.iso_in_days(2))
         # re-adjudicate under consensus — this time evidence is judged FAIL
         direct_vm.clear_mocks()
         direct_vm.mock_web(GOOD_URL, PAGE_BODY)
@@ -758,6 +764,7 @@ class TestDispute:
         deployed.open_dispute(
             1, "reason for disputing this decision",
             json.dumps([{"url": GOOD_URL}]))
+        H.set_time(direct_vm, H.iso_in_days(2))  # past response window
         direct_vm.clear_mocks()
         direct_vm.mock_web(GOOD_URL, PAGE_BODY)
         direct_vm.mock_llm(".*", llm_all_pass())

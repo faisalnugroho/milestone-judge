@@ -34,7 +34,10 @@ production Next.js dApp on top.
    The LLM never directly moves money.
 6. Either party can **dispute** within the dispute window; the original
    decision is preserved and a fresh consensus round re-adjudicates all
-   evidence with the dispute context.
+   evidence with the dispute context. Opening evidence is optional — a
+   dispute may rest on its reason alone — and the other party gets a
+   24-hour on-chain **response window** to add rebuttal evidence before
+   resolution can run.
 
 ### Why GenLayer (not just "an AI call")
 
@@ -56,12 +59,17 @@ contracts/
                            validation / adjudication engine / state machine
                            separated into documented sections)
 tests/
+  direct/
   helpers.py               direct-mode helpers (transfer hook, time warp,
-                           LLM/web mock builders)
+                           LLM/web mock builders, dict-format web mocks)
   conftest.py              path setup
   test_milestone_judge.py  69 direct-mode tests (state machine, auth, escrow
                            accounting, adjudication, disputes, deadlines,
                            prompt-injection audit, invariants)
+  test_dispute_hardening.py  26 steward-requested regressions (response
+                           window + boundaries, empty-evidence policy,
+                           both-party rebuttal access, fair fetch budget,
+                           order-independence, window interplay)
 frontend/                  Next.js 14 + TypeScript + Tailwind dApp
   app/                     pages: / /dashboard /create /evidence /dispute
                            /history /milestone/[id]
@@ -75,7 +83,7 @@ docs/
   architecture.md          state machine, storage schema, value flow
   adjudication.md          the full adjudication design + consensus
   security.md              threat model, nondet/det split, injection defense
-  testing.md               what the 69 tests cover + live protocol
+  testing.md               what the 95 tests cover + live protocol
   deployment.md            step-by-step deploy + acceptance walkthrough
 ```
 
@@ -91,8 +99,8 @@ uv pip install --python .venv/bin/python genlayer-test genlayer-py pytest eth_ut
 # lint (expected: ✓ Lint passed (3 checks) / ✓ Validation passed, 18 methods)
 GENVMROOT=/tmp/genvmroot genvm-lint check contracts/milestone_judge.py
 
-# tests (expected: 69 passed)
-.venv/bin/python -m pytest tests/test_milestone_judge.py -v
+# tests (expected: 95 passed — 69 core + 26 dispute-hardening)
+.venv/bin/python -m pytest tests/direct/ -v
 ```
 
 ### Frontend
@@ -119,7 +127,7 @@ submission evidence).
 | Worker methods | `submit_evidence` (public URLs + statement, pre-deadline) |
 | Adjudication | `start_adjudication` (either party) — nondet block: bounded web fetch → 4-section prompt → LLM per-criterion statuses; custom validator re-runs the pipeline and compares statuses + quality; `_derive_decision` maps statuses to the final verdict deterministically |
 | Settlement | `finalize_milestone` (permissionless crank, post-window) — `emit_transfer(value, on="finalized")` with checks-effects-interactions |
-| Disputes | `open_dispute` (either party, 3-day window, once) → `submit_dispute_evidence` → `resolve_dispute` (fresh consensus round, original decision preserved) |
+| Disputes | `open_dispute` (either party, 3-day window, once; opening evidence optional) → `submit_dispute_evidence` (both parties, append-only, max 20 items) → `resolve_dispute` — blocked on-chain until a 24h response window passes; fresh consensus round, original decision preserved |
 | Views | `get_milestone`, `get_milestone_ids`, `get_milestones_for`, `get_adjudications`, `get_dispute`, `get_params`, `get_contract_balance`, `get_stats` |
 | Storage | uniform `TreeMap[str, str]` JSON records, `u256` counter, node-assigned timestamps (pure integer math), wei as decimal strings |
 
