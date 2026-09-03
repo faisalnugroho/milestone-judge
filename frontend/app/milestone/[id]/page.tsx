@@ -83,6 +83,16 @@ export default function MilestoneDetailPage() {
     }
   }, [m]);
 
+  // Deterministic 30s tick so countdowns (deadline / response window) and
+  // gated buttons (resolve / finalize) update while the page stays open.
+  // The on-chain checks remain authoritative; this only refreshes display.
+  const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const t = setInterval(
+      () => setNowSec(Math.floor(Date.now() / 1000)), 30000);
+    return () => clearInterval(t);
+  }, []);
+
   const role = useMemo(() => {
     if (!m || !address) return null;
     if (m.client.toLowerCase() === address.toLowerCase()) return "client";
@@ -90,7 +100,6 @@ export default function MilestoneDetailPage() {
     return null;
   }, [m, address]);
 
-  const nowSec = Math.floor(Date.now() / 1000);
   const disputeWindowOpen =
     m &&
     ["APPROVED", "REJECTED", "INSUFFICIENT_EVIDENCE"].includes(m.status) &&

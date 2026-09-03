@@ -171,7 +171,13 @@ adjudication can run.
 
 While the dispute is OPEN, **both parties** can append rebuttal evidence
 via `submit_dispute_evidence` (append-only, per-item actor + timestamp +
-DISPUTE source tag, capped at 20 items).
+DISPUTE source tag, capped at 20 items). Evidence remains accepted after
+the 24h response window closes (until resolution): the window is a
+guaranteed **minimum** rebuttal period enforced before resolution — not a
+cutoff. Post-window additions are provenance-tagged with node timestamps
+(auditable), cannot delay or distort resolution, and cutting them off
+would only hurt a party that needs more time while the dispute sits
+unresolved.
 
 `resolve_dispute` is **blocked on-chain until a 24-hour response window**
 (`response_deadline`, enforced with node-assigned time inside the

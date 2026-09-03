@@ -16,16 +16,25 @@ contract (`0x7C6e515187c47202c7330384613229F75B180814`, deployed
 2026-09-02, 6/6 smoke PASS) remains on-chain for audit but is
 superseded — the frontend now targets the new address.
 
-Smoke results (all with FULL consensus, real validators, real LLM):
+Smoke results (all with FULL consensus, real validators, real LLM,
+2026-09-03 on the current contract):
 
-- 3× APPROVED determinism on fresh milestones (17–38 s per consensus round)
+- 3× APPROVED determinism on fresh milestones (22–64 s per consensus round)
 - Negative case → REJECTED (criterion requiring `ZEBRA_7f3a` on a page that
   lacks it)
-- Dispute round on an APPROVED milestone → second consensus round, verdict
-  APPROVED, escrow RELEASED live (real `emit_transfer`: contract balance
-  dropped from 5×0.01 to 4×0.01 GEN, worker paid)
+- Dispute-hardening protocol on an APPROVED milestone: dispute opened by
+  the client → the OTHER party (worker) added rebuttal evidence (accepted,
+  provenance on-chain) → an immediate `resolve_dispute` was REFUSED by the
+  24h on-chain response window (leader payload: `dispute response window
+  is still open`) → the escrow stays locked in DISPUTED (0.04 GEN held)
 - `finalize_milestone` correctly refused inside the 3-day dispute window
   (leader payload: `"dispute window is still open"`)
+
+(The superseded 2026-09-02 run on `0x7C6e5151...0814` — which proved a
+dispute resolution releasing the escrow live via `emit_transfer` — is
+preserved in git history; the full-resolution path is additionally
+covered by direct-mode tests `test_dispute_resolves_after_window` and
+`test_full_dispute_overturns_decision`.)
 
 ## Environments
 

@@ -1154,11 +1154,22 @@ class MilestoneJudge(gl.Contract):
     @gl.public.write
     def submit_dispute_evidence(self, milestone_id: u256,
                                 evidence_json: str) -> None:
-        # Either party may add REBUTTAL evidence while the dispute is OPEN
-        # and the response window is running: the opener may add more, and
-        # the OTHER party can answer. Evidence items are appended — never
-        # overwritten — and each carries its actor + timestamp + DISPUTE
-        # source tag (feeding the reserved rebuttal fetch budget).
+        # Either party may add REBUTTAL evidence while the dispute is OPEN.
+        # POST-WINDOW NOTE (deliberate design): evidence remains accepted
+        # after the 24h response window closes but before resolve_dispute.
+        # The steward requirement is a response window BEFORE RESOLUTION —
+        # enforced at resolve_dispute. The window is a guaranteed MINIMUM
+        # rebuttal period, not a maximum: both parties keep symmetric
+        # append rights (each item is provenance-tagged with a node
+        # timestamp, so post-window additions are auditable), nobody can
+        # delay or distort resolution by adding evidence, the 20-item cap
+        # bounds cost, and either party may trigger resolution the moment
+        # the window closes. Cutting off evidence after the window would
+        # only harm a party that needs more time, while the dispute sits
+        # unresolved.
+        # Items are appended — never overwritten — and each carries its
+        # actor + timestamp + DISPUTE source tag (feeding the reserved
+        # rebuttal fetch budget).
         mid = str(int(milestone_id))
         rec = self._load(mid)
         if rec["status"] != STATUS_DISPUTED:

@@ -82,12 +82,16 @@ https://github.com/faisalnugroho/milestone-judge
 
 ## Live Contract Link
 
-https://explorer-studio.genlayer.com/address/0x7C6e515187c47202c7330384613229F75B180814
+https://explorer-studio.genlayer.com/address/0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1
 
-(Contract `0x7C6e515187c47202c7330384613229F75B180814`, GenLayer Studionet,
-deployed 2026-09-02, full-consensus deploy tx
-`0xedacbd965eaa08c5f6970598dc7625e12812307c863e70d7a464687b19cb6aae`,
-recorded in `docs/deployment_log.json`.)
+(Contract `0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1`, GenLayer Studionet,
+deployed 2026-09-03 with the steward-requested dispute hardening
+(blank-evidence policy, both-party rebuttal evidence, 24h on-chain
+response window, fair 14000/6000 fetch-budget split), full-consensus
+deploy tx `0xa7add21458a34612774b557e5ff066ff41b39237c5eb3bbaa664fef10958f4eb`,
+recorded in `docs/deployment_log.json`. An earlier deployment
+`0x7C6e5151...0814` from 2026-09-02 is superseded and remains on-chain
+for audit.)
 
 ## Live dApp
 
@@ -95,49 +99,56 @@ https://milestone-judge.vercel.app — Next.js 14 + TypeScript + Tailwind,
 genlayer-js client, MetaMask (EIP-1193). Pages: landing, dashboard, create,
 evidence submission, dispute, history, milestone detail. Reads live contract
 state; every write is a real consensus transaction surfaced with its
-receipt.
+receipt. The dispute UI shows per-item evidence provenance (who submitted
+what and when), a live response-window countdown, and a rebuttal-evidence
+form available to BOTH parties while a dispute is open; the resolve action
+is gated on the on-chain response deadline.
 
 ## Test / Deployment Proof
 
 Local evidence (reproducible from the repo):
 
-- Tests: `pytest tests/direct -q` → 69/69 passed. Coverage: state machine,
+- Tests: `.venv/bin/python -m pytest tests/direct/ -q` → 95/95 passed
+  (69 core + 26 dispute-hardening regressions). Coverage: state machine,
   authorization, escrow accounting (exact-amount, double-funding, refunds),
   adjudication decision derivation, consensus comparison semantics,
-  disputes, deadlines, prompt-injection audit trail, and funds-conservation
-  invariants.
+  disputes, deadlines, prompt-injection audit trail, funds-conservation
+  invariants — plus, per the steward review: empty-evidence policy,
+  immediate-resolution rejection, response-window boundaries
+  (deadline-1s / exactly-at / deadline+1s), other-party rebuttal access,
+  stranger rejection, evidence-order exhaustion / fair fetch budget
+  (rebuttal keeps its reserved 3000-char share against 4×5000-char base
+  URLs; 20000-char hard cap), and original-adjudication immutability.
 - Lint: `genvm-lint check contracts/milestone_judge.py` → Lint passed
   (3 checks), Validation passed, 18 methods (8 view, 10 write).
 
-Live smoke on Studionet, full protocol, 6/6 PASS (2026-09-02, all consensus
-rounds with real validators and real LLM; complete log with tx hashes and
-full verdict payloads in `docs/deployment_log.json`):
+Live smoke on Studionet, full protocol, ALL PASS (2026-09-03, all
+consensus rounds with real validators and real LLM; complete log with tx
+hashes and full verdict payloads in `docs/deployment_log.json`):
 
 1. Deploy: full consensus, verified leader receipt, address
-   `0x7C6e5151...0814` (tx `0xedacbd96...cb6aae`).
+   `0x0872B4be...15d1` (tx `0xa7add214...58f4eb`).
 2. Determinism: 3 consecutive adjudications on fresh milestones, all
-   APPROVED with identical rule traces (17–38 s per consensus round).
-   Milestone 1 tx `0xe234b7fa...dadd21d`, milestone 2 tx
-   `0x03cb883c...8237079`, milestone 3 tx `0xfa72a224...253c1da`.
+   APPROVED with identical rule traces (22–64 s per consensus round).
 3. Negative case: criterion requiring the secret word `ZEBRA_7f3a` on a
-   page that lacks it → REJECTED, rule `mandatory_fail:c1` (tx
-   `0x9e1de779...d0af2a1`).
-4. Dispute round on an APPROVED milestone inside the window: fresh
-   consensus round → APPROVED again → escrow RELEASED live (real
-   `emit_transfer`, 0.01 GEN paid out to the worker) (tx
-   `0x89eac443...c71fad77`).
+   page that lacks it → REJECTED (tx in log).
+4. Dispute-hardening protocol on an APPROVED milestone: dispute opened
+   by the client → the OTHER party (worker) added rebuttal evidence
+   (accepted, provenance on-chain) → immediate `resolve_dispute` REFUSED
+   by the 24h on-chain response window (leader payload: "dispute
+   response window is still open") → escrow stays locked in DISPUTED.
 5. Window enforcement: `finalize_milestone` inside the 3-day window
-   correctly refused (`"dispute window is still open"`), proven by a live
+   correctly refused ("dispute window is still open"), proven by a live
    negative-check transaction.
-6. All of the above recorded machine-readably in `docs/deployment_log.json`
-   with `all_pass: true`.
+6. All of the above recorded machine-readably in
+   `docs/deployment_log.json` with `all_pass: true`.
 
 ## Evidence List (attach to the portal, in priority order)
 
-1. GitHub repository (contract + 69 direct-mode tests + smoke/deploy
+1. GitHub repository (contract + 95 direct-mode tests + smoke/deploy
    scripts + docs): https://github.com/faisalnugroho/milestone-judge
 2. Studionet explorer, contract page:
-   https://explorer-studio.genlayer.com/address/0x7C6e515187c47202c7330384613229F75B180814
+   https://explorer-studio.genlayer.com/address/0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1
 3. Live dApp: https://milestone-judge.vercel.app
 4. Machine-readable smoke evidence: `docs/deployment_log.json` in the repo
 5. Design documentation: `docs/architecture.md`, `docs/adjudication.md`,

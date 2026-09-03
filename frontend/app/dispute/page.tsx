@@ -31,6 +31,16 @@ export default function DisputePage() {
   const [rebuttalKind, setRebuttalKind] = useState<string>("WEBSITE");
   const [rebuttalNote, setRebuttalNote] = useState("");
 
+  // Deterministic 30s tick so the response-window countdown and the gated
+  // resolve button update while the page stays open. On-chain checks stay
+  // authoritative; this only refreshes the display.
+  const [nowSec, setNowSec] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const t = setInterval(
+      () => setNowSec(Math.floor(Date.now() / 1000)), 30000);
+    return () => clearInterval(t);
+  }, []);
+
   const lookup = useCallback(async (id: string) => {
     if (!/^\d+$/.test(id) || !getReadContract()) return;
     setLookupError(null);
@@ -51,7 +61,7 @@ export default function DisputePage() {
     void lookup(mid);
   }, [mid, lookup]);
 
-  const nowSec = Math.floor(Date.now() / 1000);
+  // display-only clock; the contract enforces the window authoritatively
   const responseWindowOpen =
     record?.status === "OPEN" &&
     Number(record.response_deadline) > nowSec;

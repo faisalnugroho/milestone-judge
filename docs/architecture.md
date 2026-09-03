@@ -112,7 +112,11 @@ refunded, timeline (list)`
                    │   ┌──────────┐  open_dispute (either party, 3d)     │
                    │   │ DISPUTED │◀──────────────────────────────────────┘
                    │   └────┬─────┘
-                   │        │ resolve_dispute (fresh consensus) → RELEASED/REFUNDED
+                   │        │ submit_dispute_evidence (both parties,
+                   │        │   append-only, ≤ 20 items)
+                   │        │ resolve_dispute — only after the 24h
+                   │        │   on-chain response window (fresh
+                   │        │   consensus) → RELEASED/REFUNDED
                    │        ▼
                    │  finalize (permissionless, post-window)
                    ▼

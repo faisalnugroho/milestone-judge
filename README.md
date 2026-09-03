@@ -7,10 +7,15 @@ for digital work, implemented as a GenLayer Intelligent Contract with a
 production Next.js dApp on top.
 
 **Live (Studionet):** contract
-[`0x7C6e515187c47202c7330384613229F75B180814`](https://explorer-studio.genlayer.com/address/0x7C6e515187c47202c7330384613229F75B180814)
-· dApp https://milestone-judge.vercel.app · smoke 6/6 PASS
-(3× APPROVED determinism, negative → REJECTED, dispute round → live
-`emit_transfer` release, window enforcement)
+[`0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1`](https://explorer-studio.genlayer.com/address/0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1)
+· dApp https://milestone-judge.vercel.app · smoke ALL PASS
+(3× APPROVED determinism, negative → REJECTED, 24h response window
+enforced live — early resolve refused, rebuttal accepted from the other
+party, escrow locked, finalize window enforced)
+
+> Address history: `0x7C6e515187c47202c7330384613229F75B180814`
+> (deployed 2026-09-02, 6/6 smoke) was superseded on 2026-09-03 by the
+> dispute-hardening redeploy above. It remains on-chain for audit.
 
 ---
 
