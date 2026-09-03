@@ -1116,11 +1116,24 @@ class MilestoneJudge(gl.Contract):
         items = _parse_evidence(evidence_json, EVIDENCE_SOURCE_DISPUTE,
                                allow_empty=True)
         now = self._now()
+        # Store opening evidence with the SAME provenance shape as
+        # submit_dispute_evidence items (actor + at), so "who submitted
+        # each evidence item" is answerable for every entry.
+        opening_evidence = []
+        for it in items:
+            opening_evidence.append({
+                "url": it["url"],
+                "kind": it["kind"],
+                "note": it["note"],
+                "at": str(now),
+                "actor": self._sender(),
+                "source": EVIDENCE_SOURCE_DISPUTE,
+            })
         dispute = {
             "milestone_id": mid,
             "opened_by": self._sender(),
             "reason": reason,
-            "evidence": items,
+            "evidence": opening_evidence,
             "original_decision": rec["verdict"].get("decision", ""),
             "original_round": rec["verdict"].get("round", 0),
             "opened_at": str(now),

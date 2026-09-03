@@ -211,7 +211,8 @@ export default function DisputePage() {
                           : e.url}
                       </a>
                       <span className="text-[11px] text-ink-400">
-                        by {shortAddress(e.actor, 4)} · {formatEpoch(e.at)}
+                        by {e.actor ? shortAddress(e.actor, 4) : "unknown"} ·{" "}
+                        {e.at ? formatEpoch(e.at) : "—"}
                       </span>
                       {e.note && (
                         <span className="w-full text-[11px] text-ink-400">

@@ -446,13 +446,15 @@ export default function MilestoneDetailPage() {
                     {e.url.length > 56 ? `${e.url.slice(0, 56)}…` : e.url}
                   </a>
                   <span className="text-[11px] text-ink-400">
-                    by {shortAddress(e.actor, 4)}
-                    {e.actor.toLowerCase() === m.client.toLowerCase()
-                      ? " (client)"
-                      : e.actor.toLowerCase() === m.worker.toLowerCase()
-                        ? " (worker)"
-                        : ""}{" "}
-                    · {formatEpoch(e.at)}
+                    by {e.actor ? shortAddress(e.actor, 4) : "unknown"}
+                    {e.actor
+                      ? e.actor.toLowerCase() === m.client.toLowerCase()
+                        ? " (client)"
+                        : e.actor.toLowerCase() === m.worker.toLowerCase()
+                          ? " (worker)"
+                          : ""
+                      : ""}{" "}
+                    · {e.at ? formatEpoch(e.at) : "—"}
                   </span>
                   {e.note && (
                     <span className="w-full text-[11px] text-ink-400">

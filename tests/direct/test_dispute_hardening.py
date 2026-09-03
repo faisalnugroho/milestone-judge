@@ -333,6 +333,12 @@ class TestRebuttalEvidenceAccess:
         deployed.open_dispute(
             1, "worker did not deliver",
             json.dumps([{"url": "https://acme.example.com/c1"}]))
+        # opening evidence must carry full provenance too (actor + at)
+        d = json.loads(deployed.get_dispute(1))
+        opener_item = d["evidence"][0]
+        assert opener_item["actor"] == addr_str(alice)
+        assert opener_item["at"] != ""
+        assert opener_item["source"] == "DISPUTE"
         direct_vm.sender = bob                      # the OTHER party
         deployed.submit_dispute_evidence(
             1, json.dumps([{"url": "https://acme.example.com/w-reb",

@@ -46,8 +46,10 @@ export interface EvidenceItem {
   url: string;
   kind: EvidenceKind | string;
   note: string;
-  at: string;
-  actor: string;
+  /** actor/at absent on dispute-opening evidence written by old
+   *  contract versions — pages must treat them as optional */
+  at?: string;
+  actor?: string;
   /** ORIGINAL = worker base evidence; DISPUTE = dispute/rebuttal round */
   source?: "ORIGINAL" | "DISPUTE" | string;
 }
