@@ -124,9 +124,13 @@ Local evidence (reproducible from the repo):
 
 Live smoke on Studionet, full protocol (2026-09-03, all consensus
 rounds with real validators and real LLM; complete log with tx hashes
-and full verdict payloads in `docs/deployment_log.json`; pre-window
-points ALL PASS, post-window resolution auto-executes after the
-response deadline):
+and full verdict payloads in `docs/deployment_log.json`). Status: 8/11
+live smoke checks verified pre-window; post-window resolution, fresh
+dispute adjudication, and settlement remain pending until the enforced
+24-hour response window closes (2026-09-04 17:24:39 UTC) — the
+contract's own enforcement makes earlier execution impossible, and the
+post-window run (`scripts/post_window_resolution.py`) appends its
+results to the log when the window closes:
 
 1. Deploy: full consensus, verified leader receipt, address
    `0x0872B4be...15d1` (tx `0xa7add214...58f4eb`).
