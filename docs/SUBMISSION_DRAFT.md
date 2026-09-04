@@ -122,9 +122,11 @@ Local evidence (reproducible from the repo):
 - Lint: `genvm-lint check contracts/milestone_judge.py` → Lint passed
   (3 checks), Validation passed, 18 methods (8 view, 10 write).
 
-Live smoke on Studionet, full protocol, ALL PASS (2026-09-03, all
-consensus rounds with real validators and real LLM; complete log with tx
-hashes and full verdict payloads in `docs/deployment_log.json`):
+Live smoke on Studionet, full protocol (2026-09-03, all consensus
+rounds with real validators and real LLM; complete log with tx hashes
+and full verdict payloads in `docs/deployment_log.json`; pre-window
+points ALL PASS, post-window resolution auto-executes after the
+response deadline):
 
 1. Deploy: full consensus, verified leader receipt, address
    `0x0872B4be...15d1` (tx `0xa7add214...58f4eb`).

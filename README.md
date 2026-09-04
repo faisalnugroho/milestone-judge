@@ -8,10 +8,15 @@ production Next.js dApp on top.
 
 **Live (Studionet):** contract
 [`0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1`](https://explorer-studio.genlayer.com/address/0x0872B4be1bcB6234f336d9A7C99cefc606Ea15d1)
-· dApp https://milestone-judge.vercel.app · smoke ALL PASS
-(3× APPROVED determinism, negative → REJECTED, 24h response window
-enforced live — early resolve refused, rebuttal accepted from the other
-party, escrow locked, finalize window enforced)
+· dApp https://milestone-judge.vercel.app · live smoke (final
+contract): 8/11 points verified pre-window — 3× APPROVED determinism,
+negative → REJECTED, 24h response window enforced live (early resolve
+refused on-chain, rebuttal accepted from the other party with
+provenance, escrow locked, finalize window enforced); the remaining
+post-window points (post-deadline resolution → fresh consensus round →
+deterministic settlement) execute automatically once the 24h window
+closes (2026-09-04 17:24:39 UTC) — results are appended to
+`docs/deployment_log.json` by `scripts/post_window_resolution.py`.
 
 > Address history: `0x7C6e515187c47202c7330384613229F75B180814`
 > (deployed 2026-09-02, 6/6 smoke) was superseded on 2026-09-03 by the

@@ -20,3 +20,6 @@ frontend/node_modules/
 artifacts/
 scripts/smoke_worker.json
 frontend/tsconfig.tsbuildinfo
+
+# runtime smoke output
+scripts/post_window_run.log

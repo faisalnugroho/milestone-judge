@@ -30,6 +30,14 @@ Smoke results (all with FULL consensus, real validators, real LLM,
 - `finalize_milestone` correctly refused inside the 3-day dispute window
   (leader payload: `"dispute window is still open"`)
 
+Post-window resolution (points 8-10) runs automatically once the 24h
+response window closes (deadline 2026-09-04 17:24:39 UTC):
+`scripts/post_window_resolution.py` performs `resolve_dispute` on the
+live contract, verifies the fresh consensus round and deterministic
+settlement (escrow released/refunded, zeroed balance, double-resolve
+refused), and appends machine-readable results under
+`smoke.dispute_resolution` in `docs/deployment_log.json`.
+
 (The superseded 2026-09-02 run on `0x7C6e5151...0814` — which proved a
 dispute resolution releasing the escrow live via `emit_transfer` — is
 preserved in git history; the full-resolution path is additionally
